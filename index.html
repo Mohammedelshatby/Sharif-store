@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الشريف المتكامل V3</title>
+    <title>نظام مخازن الشريف المتكامل</title>
     <style>
-        :root { --admin-color: #1e293b; --user-color: #0284c7; --bg: #f8fafc; }
+        :root { --main: #1e293b; --accent: #0284c7; --bg: #f8fafc; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 15px; direction: rtl; text-align: right; }
         .container { max-width: 1200px; margin: auto; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .header { background: white; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-right: 10px solid var(--admin-color); }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
-        button { padding: 12px 20px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: 0.2s; display: inline-block; }
-        .btn-blue { background: var(--user-color); color: white; }
+        .header { background: white; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-right: 10px solid var(--main); }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
+        button { padding: 12px 20px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: 0.2s; }
+        .btn-blue { background: var(--accent); color: white; }
         .btn-green { background: #10b981; color: white; }
         .btn-red { background: #ef4444; color: white; }
         .admin-only { display: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
         th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: center; }
-        th { background: #f1f5f9; }
+        th { background: #f1f5f9; color: #475569; }
         .print-area { display: none; }
         @media print { .no-print { display: none !important; } .print-area { display: block !important; } }
     </style>
@@ -28,187 +28,199 @@
 <div class="container no-print">
     <div class="header">
         <div>
-            <h2 id="stName" style="margin:0;">مخازن الشريف الجندي</h2>
-            <small id="userDisplay" style="color:red;">يجب تسجيل الدخول (admin / 123)</small>
+            <h1 id="stName" style="margin:0; font-size: 24px;">مخازن الشريف الجندي</h1>
+            <p id="userStatus" style="color: #64748b; margin: 5px 0 0 0;">الحالة: زائر</p>
         </div>
-        <div id="loginArea" style="display: flex; gap: 5px;">
-            <input type="text" id="loginUser" placeholder="المستخدم" style="width:110px; margin:0;">
-            <input type="password" id="loginPass" placeholder="الرمز" style="width:90px; margin:0;">
-            <button class="btn-blue" onclick="login()">دخول</button>
-        </div>
-        <button class="btn-red" id="logoutBtn" onclick="localStorage.removeItem('gms_v3_final'); location.reload();" style="display:none;">خروج وتصفير</button>
-    </div>
-
-    <div class="card admin-only" id="adminPanel">
-        <h3>⚙ إعدادات الإدارة</h3>
-        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-            <div style="flex:1; min-width:200px; border:1px solid #eee; padding:10px; border-radius:8px;">
-                <label>إضافة موظف:</label>
-                <input type="text" id="newStaffName" placeholder="اسم المستخدم">
-                <input type="text" id="newStaffPass" placeholder="كلمة المرور">
-                <button class="btn-blue" style="width:100%" onclick="addStaff()">حفظ الموظف</button>
-            </div>
-            <div style="flex:1; min-width:200px; border:1px solid #eee; padding:10px; border-radius:8px;">
-                <label>إضافة عميل/مورد:</label>
-                <input type="text" id="entityName" placeholder="الاسم">
-                <select id="entityType"><option value="عميل">عميل</option><option value="مورد">مورد</option></select>
-                <button class="btn-green" style="width:100%" onclick="addEntity()">حفظ</button>
-            </div>
-            <div style="flex:1; min-width:200px; border:1px solid #eee; padding:10px; border-radius:8px;">
-                <label>تغيير رمز المدير:</label>
-                <input type="text" id="newAdminPass" placeholder="الرمز الجديد">
-                <button class="btn-red" style="width:100%" onclick="changeAdminPass()">تحديث الرمز</button>
-            </div>
+        <div id="authButtons">
+            <button class="btn-blue" onclick="requestLogin()">🔐 دخول النظام</button>
+            <button class="btn-red" id="logoutBtn" style="display:none;" onclick="logout()">تسجيل خروج</button>
         </div>
     </div>
 
-    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-        <div class="card admin-only" style="flex: 1; min-width: 250px;">
-            <h3>📦 الأصناف</h3>
-            <input type="text" id="itemName" placeholder="اسم الصنف">
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div class="card admin-only" id="adminPanel" style="flex: 1; min-width: 300px;">
+            <h3 style="border-bottom: 2px solid #eee; padding-bottom: 10px;">⚙ إعدادات المدير</h3>
+            <input type="text" id="newStaffName" placeholder="اسم الموظف الجديد">
+            <input type="text" id="newStaffPass" placeholder="كلمة مرور الموظف">
+            <button class="btn-blue" style="width:100%" onclick="addStaff()">+ حفظ الموظف</button>
+            <hr>
+            <input type="text" id="entityName" placeholder="اسم عميل أو مورد">
+            <select id="entityType"><option value="عميل">عميل</option><option value="مورد">مورد</option></select>
+            <button class="btn-green" style="width:100%" onclick="addEntity()">+ حفظ (عميل/مورد)</button>
+            <hr>
+            <input type="text" id="itemName" placeholder="اسم صنف جديد">
             <input type="text" id="itemCode" placeholder="كود الصنف">
-            <button class="btn-blue" style="width:100%" onclick="addItem()">إضافة صنف</button>
+            <button class="btn-blue" style="width:100%" onclick="addItem()">+ إضافة الصنف للمخزن</button>
         </div>
 
-        <div class="card" style="flex: 2; min-width: 300px;">
-            <h3>🔃 حركة المخزن</h3>
+        <div class="card" style="flex: 2; min-width: 350px;">
+            <h3 style="border-bottom: 2px solid #eee; padding-bottom: 10px;">🔃 حركة وارد وصرف</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <select id="itemSelect"><option value="">-- اختر صنف --</option></select>
+                <select id="itemSelect"><option value="">-- اختر الصنف --</option></select>
                 <input type="text" id="docNum" placeholder="رقم الإذن">
                 <input type="number" id="qtyInput" placeholder="الكمية">
                 <select id="entitySelect"><option value="">-- العميل/المورد --</option></select>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button class="btn-green" style="flex:1" onclick="logAction('وارد')">وارد (+)</button>
-                <button class="btn-red" style="flex:1" onclick="logAction('صرف')">صرف (-)</button>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-green" style="flex:1" onclick="handleAction('وارد')">إضافة وارد (+)</button>
+                <button class="btn-red" style="flex:1" onclick="handleAction('صرف')">تسجيل صرف (-)</button>
             </div>
         </div>
     </div>
 
     <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
-            <h3>📊 الجرد الحالي</h3>
-            <div style="display:flex; gap:5px;">
-                <input type="text" id="searchInput" placeholder="بحث..." onkeyup="refresh()" style="width:180px; margin:0;">
-                <button onclick="window.print()" style="background:#475569; color:white;">طباعة</button>
-                <button onclick="exportExcel()" style="background:#166534; color:white;">Excel</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <h3>📊 الرصيد والبحث</h3>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="searchInput" placeholder="بحث بالاسم أو الكود..." onkeyup="refreshUI()" style="width:220px; margin:0;">
+                <button onclick="window.print()" style="background:#475569; color:white;">🖨 طباعة</button>
+                <button onclick="exportToExcel()" style="background:#166534; color:white;">Excel</button>
             </div>
         </div>
         <table>
-            <thead><tr><th>الكود</th><th>الصنف</th><th>الرصيد</th><th>التحكم</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>الكود</th>
+                    <th>اسم الصنف</th>
+                    <th>الرصيد الحالي</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
 </div>
 
-<div id="printArea" class="print-area"></div>
+<div id="printContainer" class="print-area"></div>
 
 <script>
-    // بيانات افتراضية
-    var data = JSON.parse(localStorage.getItem('gms_v3_final')) || { 
-        name: "مخازن الشريف الجندي", adminPass: "123", staff: [], items: [], entities: [], logs: [] 
+    // تهيئة البيانات
+    let store = JSON.parse(localStorage.getItem('gms_final_system')) || {
+        name: "مخازن الشريف الجندي",
+        adminPass: "123",
+        staff: [],
+        items: [],
+        entities: [],
+        logs: []
     };
-    var currentUser = null;
+    let user = null;
 
-    function login() {
-        var u = document.getElementById('loginUser').value;
-        var p = document.getElementById('loginPass').value;
+    function requestLogin() {
+        let name = prompt("اسم المستخدم (admin للمدير):");
+        let pass = prompt("كلمة المرور:");
         
-        if(u === "admin" && p === data.adminPass) {
-            currentUser = {name: "المدير", role: "admin"};
+        if (name === "admin" && pass === store.adminPass) {
+            user = { name: "المدير", role: "admin" };
         } else {
-            var s = data.staff.find(x => x.user === u && x.pass === p);
-            if(s) currentUser = {name: s.user, role: "staff"};
+            let s = store.staff.find(x => x.u === name && x.p === pass);
+            if (s) user = { name: s.u, role: "staff" };
         }
 
-        if(currentUser) {
-            document.getElementById('loginArea').style.display = 'none';
-            document.getElementById('logoutBtn').style.display = 'block';
-            document.getElementById('userDisplay').innerText = "مرحباً: " + currentUser.name;
-            document.getElementById('userDisplay').style.color = "green";
-            if(currentUser.role === "admin") {
-                document.querySelectorAll('.admin-only').forEach(e => e.style.display = 'block');
+        if (user) {
+            document.getElementById('userStatus').innerText = "مرحباً: " + user.name;
+            document.getElementById('userStatus').style.color = "green";
+            document.getElementById('logoutBtn').style.display = "inline-block";
+            document.querySelectorAll('.btn-blue')[0].style.display = "none";
+            if (user.role === "admin") {
+                document.querySelectorAll('.admin-only').forEach(e => e.style.display = "block");
             }
-            refresh();
-        } else { alert("اسم المستخدم أو الرمز خطأ!"); }
+            refreshUI();
+        } else {
+            alert("بيانات الدخول غير صحيحة!");
+        }
     }
 
-    function refresh() {
-        localStorage.setItem('gms_v3_final', JSON.stringify(data));
-        document.getElementById('stName').innerText = data.name;
-        var sTerm = document.getElementById('searchInput').value.toLowerCase();
-        
-        var iSel = document.getElementById('itemSelect');
-        var eSel = document.getElementById('entitySelect');
-        iSel.innerHTML = '<option value="">-- اختر صنف --</option>';
-        eSel.innerHTML = '<option value="">-- العميل/المورد --</option>';
-        data.items.forEach(i => iSel.innerHTML += <option value="${i.code}">${i.name}</option>);
-        data.entities.forEach(e => eSel.innerHTML += <option value="${e.name}">${e.name} (${e.type})</option>);
+    function logout() { localStorage.removeItem('gms_final_system'); location.reload(); }
 
-        var body = document.getElementById('tableBody');
+    function refreshUI() {
+        localStorage.setItem('gms_final_system', JSON.stringify(store));
+        let term = document.getElementById('searchInput').value.toLowerCase();
+        
+        // تحديث القوائم
+        let iSel = document.getElementById('itemSelect');
+        let eSel = document.getElementById('entitySelect');
+        iSel.innerHTML = '<option value="">-- اختر الصنف --</option>';
+        eSel.innerHTML = '<option value="">-- العميل/المورد --</option>';
+        store.items.forEach(i => iSel.innerHTML += <option value="${i.c}">${i.n}</option>);
+        store.entities.forEach(e => eSel.innerHTML += <option value="${e.n}">${e.n} (${e.t})</option>);
+
+        // تحديث الجدول
+        let body = document.getElementById('tableBody');
         body.innerHTML = "";
-        data.items.forEach((item, index) => {
-            if(item.name.toLowerCase().includes(sTerm) || item.code.toLowerCase().includes(sTerm)) {
-                var total = 0;
-                data.logs.forEach(l => { if(l.code == item.code) total += (l.type=='وارد'?l.qty:-l.qty); });
+        store.items.forEach((item, idx) => {
+            if (item.n.toLowerCase().includes(term) || item.c.toLowerCase().includes(term)) {
+                let bal = 0;
+                store.logs.forEach(l => { if(l.c == item.c) bal += (l.t=='وارد'?l.q:-l.q); });
                 body.innerHTML += `<tr>
-                    <td>${item.code}</td>
-                    <td><b>${item.name}</b></td>
-                    <td style="font-weight:bold;">${total}</td>
+                    <td>${item.c}</td>
+                    <td><b>${item.n}</b></td>
+                    <td style="font-weight:bold; color:${bal<0?'red':'black'}">${bal}</td>
                     <td>
-                        <button class="btn-blue" onclick="printCard('${item.code}')">كارتة</button>
-                        ${currentUser?.role=='admin' ? <button onclick="delItem(${index})" style="color:red; background:none;">🗑</button> : ''}
+                        <button class="btn-blue" onclick="printCard('${item.c}')" style="padding:5px 10px;">كارتة</button>
+                        ${user?.role == 'admin' ? <button onclick="delItem(${idx})" style="color:red; background:none;">🗑</button> : ''}
                     </td>
                 </tr>`;
             }
         });
     }
 
-    function logAction(type) {
-        if(!currentUser) return alert("سجل دخول أولاً!");
-        var c = document.getElementById('itemSelect').value, q = parseFloat(document.getElementById('qtyInput').value), d = document.getElementById('docNum').value, e = document.getElementById('entitySelect').value;
-        if(c && q && d) {
-            data.logs.push({code:c, qty:q, type:type, doc:d, entity:e, date: new Date().toLocaleString(), user: currentUser.name});
-            refresh();
+    function handleAction(type) {
+        if (!user) return alert("يرجى تسجيل الدخول أولاً!");
+        let c = document.getElementById('itemSelect').value;
+        let q = parseFloat(document.getElementById('qtyInput').value);
+        let d = document.getElementById('docNum').value;
+        let e = document.getElementById('entitySelect').value;
+
+        if (c && q && d) {
+            store.logs.push({ c:c, q:q, t:type, d:d, e:e, dt: new Date().toLocaleString(), u: user.name });
+            refreshUI();
             document.getElementById('qtyInput').value = '';
-            alert("تم بنجاح!");
-        } else { alert("أدخل الكمية ورقم الإذن!"); }
+            alert("تم التسجيل بنجاح");
+        } else {
+            alert("أكمل البيانات: الصنف، الكمية، رقم الإذن");
+        }
     }
 
     function addItem() {
-        var n = document.getElementById('itemName').value, c = document.getElementById('itemCode').value;
-        if(n && c) { data.items.push({name:n, code:c}); refresh(); document.getElementById('itemName').value=''; document.getElementById('itemCode').value=''; }
+        let n = document.getElementById('itemName').value, c = document.getElementById('itemCode').value;
+        if(n && c) { store.items.push({n:n, c:c}); refreshUI(); document.getElementById('itemName').value=''; document.getElementById('itemCode').value=''; }
     }
 
     function addStaff() {
-        var u = document.getElementById('newStaffName').value, p = document.getElementById('newStaffPass').value;
-        if(u && p) { data.staff.push({user:u, pass:p}); refresh(); alert("تم حفظ الموظف"); }
+        let u = document.getElementById('newStaffName').value, p = document.getElementById('newStaffPass').value;
+        if(u && p) { store.staff.push({u:u, p:p}); refreshUI(); alert("تم الحفظ"); }
     }
 
     function addEntity() {
-        var n = document.getElementById('entityName').value, t = document.getElementById('entityType').value;
-        if(n) { data.entities.push({name:n, type:t}); refresh(); alert("تم الحفظ"); }
+        let n = document.getElementById('entityName').value, t = document.getElementById('entityType').value;
+        if(n) { store.entities.push({n:n, t:t}); refreshUI(); alert("تم الحفظ"); }
     }
 
     function printCard(code) {
-        var item = data.items.find(i => i.code == code);
-        var logs = data.logs.filter(l => l.code == code);
-        var html = `<div style="direction:rtl; padding:20px;"><h2>كارتة: ${item.name}</h2><table border="1" style="width:100%; border-collapse:collapse;">
-                    <thead><tr><th>التاريخ</th><th>النوع</th><th>الكمية</th><th>الإذن</th><th>الطرف</th></tr></thead><tbody>`;
-        var b = 0; logs.forEach(l => { b += (l.type=='وارد'?l.qty:-l.qty); html += <tr><td>${l.date}</td><td>${l.type}</td><td>${l.qty}</td><td>${l.doc}</td><td>${l.entity}</td></tr>; });
-        html += </tbody></table><h3>الرصيد: ${b}</h3></div>;
-        document.getElementById('printArea').innerHTML = html; window.print();
+        let item = store.items.find(i => i.c == code);
+        let logs = store.logs.filter(l => l.c == code);
+        let html = `<div style="direction:rtl; padding:30px; font-family:sans-serif;">
+            <h2>تقرير كارتة صنف: ${item.n} (${code})</h2>
+            <table border="1" style="width:100%; border-collapse:collapse; text-align:center;">
+                <thead><tr><th>التاريخ</th><th>النوع</th><th>الكمية</th><th>رقم الإذن</th><th>الطرف</th></tr></thead><tbody>`;
+        let b = 0;
+        logs.forEach(l => { b += (l.t=='وارد'?l.q:-l.q); html += <tr><td>${l.dt}</td><td>${l.t}</td><td>${l.q}</td><td>${l.d}</td><td>${l.e}</td></tr>; });
+        html += </tbody></table><h3>الرصيد النهائي: ${b}</h3></div>;
+        document.getElementById('printContainer').innerHTML = html; window.print();
     }
 
-    function changeAdminPass() { var p = document.getElementById('newAdminPass').value; if(p) { data.adminPass = p; refresh(); alert("تم"); } }
-    function changeName() { var n = prompt("الاسم:", data.name); if(n) { data.name = n; refresh(); } }
-    function delItem(i) { if(confirm("حذف؟")) { data.items.splice(i,1); refresh(); } }
-    function exportExcel() {
-        var csv = "\uFEFFالكود,الصنف,الرصيد\n";
-        data.items.forEach(i => { var t = 0; data.logs.forEach(l => { if(l.code==i.code) t += (l.type=='وارد'?l.qty:-l.qty); }); csv += ${i.code},${i.name},${t}\n; });
-        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = "جرد.csv"; a.click();
+    function exportToExcel() {
+        let csv = "\uFEFFالكود,الصنف,الرصيد\n";
+        store.items.forEach(i => {
+            let b = 0; store.logs.forEach(l => { if(l.c==i.c) b += (l.t=='وارد'?l.q:-l.q); });
+            csv += ${i.c},${i.n},${b}\n;
+        });
+        let a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = "جرد.csv"; a.click();
     }
-    refresh();
+
+    function delItem(i) { if(confirm("حذف الصنف؟")) { store.items.splice(i,1); refreshUI(); } }
+
+    refreshUI();
 </script>
 </body>
 </html>
