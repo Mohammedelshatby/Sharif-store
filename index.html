@@ -45,14 +45,14 @@
     <div class="header">
         <div>
             <h1 id="stName" style="margin:0; font-size:22px;">مخازن الشريف الجندي</h1>
-            <small id="userStatus" style="color: #64748b;">وضع الموظف (عرض فقط للعمليات)</small>
+            <small id="userStatus" style="color: #64748b;">وضع الموظف (عرض وتسجيل فقط)</small>
         </div>
         <button class="btn-admin" id="loginBtn" onclick="adminLogin()">🔑 دخول المدير</button>
-        <button class="btn-red admin-only" id="logoutBtn" onclick="logout()">خروج</button>
+        <button class="btn-red admin-only" id="logoutBtn" onclick="logout()" style="display:none;">خروج</button>
     </div>
 
     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-        <div class="card admin-only" style="flex: 1; min-width: 300px;" id="adminPanel">
+        <div class="card admin-only" style="flex: 1; min-width: 300px; display:none;" id="adminPanel">
             <h3>📦 لوحة التحكم (المدير)</h3>
             <input type="text" id="itemName" placeholder="اسم الصنف الجديد">
             <input type="text" id="itemCode" placeholder="كود الصنف">
@@ -82,7 +82,7 @@
                     <th>الكود</th>
                     <th>الصنف</th>
                     <th>الرصيد</th>
-                    <th class="admin-only">إجراء</th>
+                    <th class="admin-only" style="display:none;">إجراء</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -91,15 +91,17 @@
 </div>
 
 <script>
+    // قاعدة البيانات
     var data = JSON.parse(localStorage.getItem('gms_final_v2')) || { items: [], logs: [], name: "مخازن الشريف الجندي" };
     var isAdmin = false;
 
-    // دالة دخول المدير
+    // تفعيل وضع المدير
     function adminLogin() {
         var pass = prompt("أدخل كلمة مرور المدير:");
-        if (pass === "123") { // يمكنك تغيير كلمة السر هنا
+        if (pass === "123") { 
             isAdmin = true;
             document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+            document.getElementById('logoutBtn').style.display = 'block';
             document.getElementById('loginBtn').style.display = 'none';
             document.getElementById('userStatus').innerText = "وضع المدير (كامل الصلاحيات)";
             refresh();
@@ -108,9 +110,7 @@
         }
     }
 
-    function logout() {
-        location.reload(); // إعادة تحميل الصفحة للخروج
-    }
+    function logout() { location.reload(); }
 
     function refresh() {
         localStorage.setItem('gms_final_v2', JSON.stringify(data));
@@ -127,11 +127,8 @@
             var row = "<tr><td>"+item.code+"</td><td><b>"+item.name+"</b></td><td>"+total+"</td>";
             if(isAdmin) {
                 row += "<td><button style='color:red; background:none; cursor:pointer;' onclick='delItem("+index+")'>🗑</button></td>";
-            } else {
-                row += "<td>-</td>";
             }
             row += "</tr>";
-            
             body.innerHTML += row;
             sel.innerHTML += "<option value='"+item.code+"'>"+item.name+"</option>";
         });
@@ -139,17 +136,27 @@
 
     function addItemNow() {
         var n = document.getElementById('itemName').value, c = document.getElementById('itemCode').value;
-        if(n && c) { data.items.push({name:n, code:c}); refresh(); document.getElementById('itemName').value=''; document.getElementById('itemCode').value=''; }
+        if(n && c) { 
+            data.items.push({name:n, code:c}); 
+            refresh(); 
+            document.getElementById('itemName').value=''; 
+            document.getElementById('itemCode').value=''; 
+        }
     }
 
     function logAction(type) {
         var c = document.getElementById('itemSelect').value, q = parseFloat(document.getElementById('qtyInput').value);
-        if(c && q) { data.logs.push({code:c, qty:q, type:type}); refresh(); document.getElementById('qtyInput').value=''; alert("تم تسجيل الـ " + type); }
+        if(c && q) { 
+            data.logs.push({code:c, qty:q, type:type}); 
+            refresh(); 
+            document.getElementById('qtyInput').value=''; 
+            alert("تم تسجيل عملية: " + type); 
+        }
     }
 
     function delItem(i) { if(confirm("حذف الصنف نهائياً؟")) { data.items.splice(i, 1); refresh(); } }
 
-    function changeName() { var n = prompt("الاسم الجديد للمنشأة:", data.name); if(n) { data.name = n; refresh(); } }
+    function changeName() { var n = prompt("الاسم الجديد:", data.name); if(n) { data.name = n; refresh(); } }
 
     function exportExcel() {
         var csv = "\uFEFFالكود,الصنف,الرصيد\n";
