@@ -3,24 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام مخازن الشريف المتكامل</title>
+    <title>نظام مخازن الشريف الجندي V4</title>
     <style>
-        :root { --main: #1e293b; --accent: #0284c7; --bg: #f8fafc; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 15px; direction: rtl; text-align: right; }
-        .container { max-width: 1200px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .header { background: white; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-right: 10px solid var(--main); }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
-        button { padding: 12px 20px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: 0.2s; }
-        .btn-blue { background: var(--accent); color: white; }
-        .btn-green { background: #10b981; color: white; }
-        .btn-red { background: #ef4444; color: white; }
-        .admin-only { display: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+        :root { --main: #1e293b; --accent: #0284c7; --bg: #f1f5f9; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 15px; direction: rtl; }
+        .container { max-width: 1100px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .header { background: #1e293b; color: white; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        button { padding: 12px 20px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; color: white; transition: 0.3s; }
+        .btn-login { background: #0284c7; }
+        .btn-add { background: #10b981; width: 100%; }
+        .btn-action { background: #4f46e5; flex: 1; }
+        .btn-red { background: #ef4444; }
+        .admin-section { display: none; background: #fdfdfd; border: 2px dashed #cbd5e1; padding: 15px; border-radius: 10px; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: center; }
-        th { background: #f1f5f9; color: #475569; }
-        .print-area { display: none; }
-        @media print { .no-print { display: none !important; } .print-area { display: block !important; } }
+        th { background: #f8fafc; color: #1e293b; }
+        .no-print { display: block; }
+        @media print { .no-print { display: none !important; } .print-only { display: block !important; } }
+        .print-only { display: none; }
     </style>
 </head>
 <body>
@@ -28,199 +30,159 @@
 <div class="container no-print">
     <div class="header">
         <div>
-            <h1 id="stName" style="margin:0; font-size: 24px;">مخازن الشريف الجندي</h1>
-            <p id="userStatus" style="color: #64748b; margin: 5px 0 0 0;">الحالة: زائر</p>
+            <h1 style="margin:0;">مخازن الشريف الجندي</h1>
+            <p id="userRole" style="margin:5px 0 0 0; font-size:14px; color:#cbd5e1;">بانتظار تسجيل الدخول...</p>
         </div>
-        <div id="authButtons">
-            <button class="btn-blue" onclick="requestLogin()">🔐 دخول النظام</button>
-            <button class="btn-red" id="logoutBtn" style="display:none;" onclick="logout()">تسجيل خروج</button>
-        </div>
+        <button class="btn-login" id="mainLoginBtn" onclick="doLogin()">🔐 دخول النظام</button>
     </div>
 
-    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-        <div class="card admin-only" id="adminPanel" style="flex: 1; min-width: 300px;">
-            <h3 style="border-bottom: 2px solid #eee; padding-bottom: 10px;">⚙ إعدادات المدير</h3>
-            <input type="text" id="newStaffName" placeholder="اسم الموظف الجديد">
-            <input type="text" id="newStaffPass" placeholder="كلمة مرور الموظف">
-            <button class="btn-blue" style="width:100%" onclick="addStaff()">+ حفظ الموظف</button>
-            <hr>
-            <input type="text" id="entityName" placeholder="اسم عميل أو مورد">
-            <select id="entityType"><option value="عميل">عميل</option><option value="مورد">مورد</option></select>
-            <button class="btn-green" style="width:100%" onclick="addEntity()">+ حفظ (عميل/مورد)</button>
-            <hr>
-            <input type="text" id="itemName" placeholder="اسم صنف جديد">
-            <input type="text" id="itemCode" placeholder="كود الصنف">
-            <button class="btn-blue" style="width:100%" onclick="addItem()">+ إضافة الصنف للمخزن</button>
-        </div>
-
-        <div class="card" style="flex: 2; min-width: 350px;">
-            <h3 style="border-bottom: 2px solid #eee; padding-bottom: 10px;">🔃 حركة وارد وصرف</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <select id="itemSelect"><option value="">-- اختر الصنف --</option></select>
-                <input type="text" id="docNum" placeholder="رقم الإذن">
-                <input type="number" id="qtyInput" placeholder="الكمية">
-                <select id="entitySelect"><option value="">-- العميل/المورد --</option></select>
+    <div id="adminPanel" class="admin-section">
+        <h3 style="margin-top:0;">⚙ لوحة تحكم المدير</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+            <div class="card">
+                <h4>إضافة موظف</h4>
+                <input type="text" id="staffU" placeholder="اسم المستخدم">
+                <input type="text" id="staffP" placeholder="كلمة المرور">
+                <button class="btn-add" onclick="saveStaff()">+ حفظ الموظف</button>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="btn-green" style="flex:1" onclick="handleAction('وارد')">إضافة وارد (+)</button>
-                <button class="btn-red" style="flex:1" onclick="handleAction('صرف')">تسجيل صرف (-)</button>
+            <div class="card">
+                <h4>إضافة عميل/مورد</h4>
+                <input type="text" id="entN" placeholder="الاسم">
+                <select id="entT"><option value="عميل">عميل</option><option value="مورد">مورد</option></select>
+                <button class="btn-add" onclick="saveEntity()" style="background:#10b981;">+ حفظ الطرف</button>
+            </div>
+            <div class="card">
+                <h4>إضافة صنف</h4>
+                <input type="text" id="itemN" placeholder="اسم الصنف">
+                <input type="text" id="itemC" placeholder="كود الصنف">
+                <button class="btn-add" onclick="saveItem()" style="background:#4f46e5;">+ إضافة صنف</button>
             </div>
         </div>
     </div>
 
     <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-            <h3>📊 الرصيد والبحث</h3>
-            <div style="display:flex; gap:8px;">
-                <input type="text" id="searchInput" placeholder="بحث بالاسم أو الكود..." onkeyup="refreshUI()" style="width:220px; margin:0;">
-                <button onclick="window.print()" style="background:#475569; color:white;">🖨 طباعة</button>
-                <button onclick="exportToExcel()" style="background:#166534; color:white;">Excel</button>
-            </div>
+        <h3>🔃 حركة وارد وصرف</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <select id="selItem"><option value="">-- اختر الصنف --</option></select>
+            <input type="text" id="inDoc" placeholder="رقم الإذن (يدوي)">
+            <input type="number" id="inQty" placeholder="الكمية">
+            <select id="selEnt"><option value="">-- العميل / المورد --</option></select>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button class="btn-action" onclick="makeLog('وارد')" style="background:#10b981;">وارد (+)</button>
+            <button class="btn-action" onclick="makeLog('صرف')" style="background:#ef4444;">صرف (-)</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3>📊 الرصيد</h3>
+            <input type="text" id="search" placeholder="بحث بالاسم أو الكود..." onkeyup="render()" style="width:250px;">
         </div>
         <table>
             <thead>
                 <tr>
                     <th>الكود</th>
-                    <th>اسم الصنف</th>
-                    <th>الرصيد الحالي</th>
-                    <th>إجراءات</th>
+                    <th>الصنف</th>
+                    <th>الرصيد</th>
+                    <th>الأدوات</th>
                 </tr>
             </thead>
-            <tbody id="tableBody"></tbody>
+            <tbody id="mainTbody"></tbody>
         </table>
     </div>
 </div>
 
-<div id="printContainer" class="print-area"></div>
+<div id="printView" class="print-only"></div>
 
 <script>
-    // تهيئة البيانات
-    let store = JSON.parse(localStorage.getItem('gms_final_system')) || {
-        name: "مخازن الشريف الجندي",
-        adminPass: "123",
-        staff: [],
-        items: [],
-        entities: [],
-        logs: []
+    // تهيئة شاملة ونظام أمان
+    let db = JSON.parse(localStorage.getItem('SHARIF_DB_V4')) || {
+        items: [], logs: [], staff: [], entities: [], adminP: "123"
     };
     let user = null;
 
-    function requestLogin() {
-        let name = prompt("اسم المستخدم (admin للمدير):");
-        let pass = prompt("كلمة المرور:");
+    function doLogin() {
+        let u = prompt("اسم المستخدم (admin للمدير):");
+        let p = prompt("كلمة المرور:");
         
-        if (name === "admin" && pass === store.adminPass) {
+        if(u === "admin" && p === db.adminP) {
             user = { name: "المدير", role: "admin" };
         } else {
-            let s = store.staff.find(x => x.u === name && x.p === pass);
-            if (s) user = { name: s.u, role: "staff" };
+            let found = db.staff.find(s => s.u === u && s.p === p);
+            if(found) user = { name: u, role: "staff" };
         }
 
-        if (user) {
-            document.getElementById('userStatus').innerText = "مرحباً: " + user.name;
-            document.getElementById('userStatus').style.color = "green";
-            document.getElementById('logoutBtn').style.display = "inline-block";
-            document.querySelectorAll('.btn-blue')[0].style.display = "none";
-            if (user.role === "admin") {
-                document.querySelectorAll('.admin-only').forEach(e => e.style.display = "block");
-            }
-            refreshUI();
-        } else {
-            alert("بيانات الدخول غير صحيحة!");
-        }
+        if(user) {
+            document.getElementById('mainLoginBtn').innerText = "خروج";
+            document.getElementById('mainLoginBtn').onclick = () => { localStorage.removeItem('SHARIF_DB_V4'); location.reload(); };
+            document.getElementById('userRole').innerText = "مرحباً: " + user.name;
+            if(user.role === "admin") document.getElementById('adminPanel').style.display = "block";
+            render();
+        } else { alert("خطأ في البيانات!"); }
     }
 
-    function logout() { localStorage.removeItem('gms_final_system'); location.reload(); }
-
-    function refreshUI() {
-        localStorage.setItem('gms_final_system', JSON.stringify(store));
-        let term = document.getElementById('searchInput').value.toLowerCase();
+    function render() {
+        localStorage.setItem('SHARIF_DB_V4', JSON.stringify(db));
+        let term = document.getElementById('search').value.toLowerCase();
         
         // تحديث القوائم
-        let iSel = document.getElementById('itemSelect');
-        let eSel = document.getElementById('entitySelect');
-        iSel.innerHTML = '<option value="">-- اختر الصنف --</option>';
-        eSel.innerHTML = '<option value="">-- العميل/المورد --</option>';
-        store.items.forEach(i => iSel.innerHTML += <option value="${i.c}">${i.n}</option>);
-        store.entities.forEach(e => eSel.innerHTML += <option value="${e.n}">${e.n} (${e.t})</option>);
+        document.getElementById('selItem').innerHTML = '<option value="">-- اختر الصنف --</option>' + db.items.map(i => <option value="${i.c}">${i.n}</option>).join('');
+        document.getElementById('selEnt').innerHTML = '<option value="">-- العميل / المورد --</option>' + db.entities.map(e => <option value="${e.n}">${e.n}</option>).join('');
 
         // تحديث الجدول
-        let body = document.getElementById('tableBody');
-        body.innerHTML = "";
-        store.items.forEach((item, idx) => {
-            if (item.n.toLowerCase().includes(term) || item.c.toLowerCase().includes(term)) {
+        let html = "";
+        db.items.forEach((item, idx) => {
+            if(item.n.toLowerCase().includes(term) || item.c.toLowerCase().includes(term)) {
                 let bal = 0;
-                store.logs.forEach(l => { if(l.c == item.c) bal += (l.t=='وارد'?l.q:-l.q); });
-                body.innerHTML += `<tr>
+                db.logs.forEach(l => { if(l.c == item.c) bal += (l.t == 'وارد' ? l.q : -l.q); });
+                html += `<tr>
                     <td>${item.c}</td>
                     <td><b>${item.n}</b></td>
-                    <td style="font-weight:bold; color:${bal<0?'red':'black'}">${bal}</td>
+                    <td>${bal}</td>
                     <td>
-                        <button class="btn-blue" onclick="printCard('${item.c}')" style="padding:5px 10px;">كارتة</button>
-                        ${user?.role == 'admin' ? <button onclick="delItem(${idx})" style="color:red; background:none;">🗑</button> : ''}
+                        <button onclick="printC('${item.c}')" style="background:#0284c7; padding:5px 10px;">كارتة</button>
+                        ${user?.role=='admin' ? <button onclick="delI(${idx})" style="background:none; color:red;">🗑</button> : ''}
                     </td>
                 </tr>`;
             }
         });
+        document.getElementById('mainTbody').innerHTML = html;
     }
 
-    function handleAction(type) {
-        if (!user) return alert("يرجى تسجيل الدخول أولاً!");
-        let c = document.getElementById('itemSelect').value;
-        let q = parseFloat(document.getElementById('qtyInput').value);
-        let d = document.getElementById('docNum').value;
-        let e = document.getElementById('entitySelect').value;
-
-        if (c && q && d) {
-            store.logs.push({ c:c, q:q, t:type, d:d, e:e, dt: new Date().toLocaleString(), u: user.name });
-            refreshUI();
-            document.getElementById('qtyInput').value = '';
-            alert("تم التسجيل بنجاح");
-        } else {
-            alert("أكمل البيانات: الصنف، الكمية، رقم الإذن");
-        }
+    function makeLog(type) {
+        if(!user) return alert("سجل دخول أولاً");
+        let c = document.getElementById('selItem').value, q = parseFloat(document.getElementById('inQty').value), d = document.getElementById('inDoc').value, e = document.getElementById('selEnt').value;
+        if(c && q && d) {
+            db.logs.push({ c, q, t: type, d, e, dt: new Date().toLocaleString(), u: user.name });
+            render(); alert("تم التسجيل");
+        } else { alert("أكمل البيانات"); }
     }
 
-    function addItem() {
-        let n = document.getElementById('itemName').value, c = document.getElementById('itemCode').value;
-        if(n && c) { store.items.push({n:n, c:c}); refreshUI(); document.getElementById('itemName').value=''; document.getElementById('itemCode').value=''; }
+    function saveItem() { 
+        let n = document.getElementById('itemN').value, c = document.getElementById('itemC').value;
+        if(n && c) { db.items.push({n, c}); render(); alert("تم الحفظ"); } 
     }
-
-    function addStaff() {
-        let u = document.getElementById('newStaffName').value, p = document.getElementById('newStaffPass').value;
-        if(u && p) { store.staff.push({u:u, p:p}); refreshUI(); alert("تم الحفظ"); }
+    function saveStaff() { 
+        let u = document.getElementById('staffU').value, p = document.getElementById('staffP').value;
+        if(u && p) { db.staff.push({u, p}); render(); alert("تم حفظ الموظف"); } 
     }
-
-    function addEntity() {
-        let n = document.getElementById('entityName').value, t = document.getElementById('entityType').value;
-        if(n) { store.entities.push({n:n, t:t}); refreshUI(); alert("تم الحفظ"); }
+    function saveEntity() { 
+        let n = document.getElementById('entN').value, t = document.getElementById('entT').value;
+        if(n) { db.entities.push({n, t}); render(); alert("تم حفظ الطرف"); } 
     }
+    function delI(i) { if(confirm("حذف؟")) { db.items.splice(i,1); render(); } }
 
-    function printCard(code) {
-        let item = store.items.find(i => i.c == code);
-        let logs = store.logs.filter(l => l.c == code);
-        let html = `<div style="direction:rtl; padding:30px; font-family:sans-serif;">
-            <h2>تقرير كارتة صنف: ${item.n} (${code})</h2>
-            <table border="1" style="width:100%; border-collapse:collapse; text-align:center;">
-                <thead><tr><th>التاريخ</th><th>النوع</th><th>الكمية</th><th>رقم الإذن</th><th>الطرف</th></tr></thead><tbody>`;
-        let b = 0;
-        logs.forEach(l => { b += (l.t=='وارد'?l.q:-l.q); html += <tr><td>${l.dt}</td><td>${l.t}</td><td>${l.q}</td><td>${l.d}</td><td>${l.e}</td></tr>; });
-        html += </tbody></table><h3>الرصيد النهائي: ${b}</h3></div>;
-        document.getElementById('printContainer').innerHTML = html; window.print();
+    function printC(code) {
+        let item = db.items.find(i => i.c == code);
+        let logs = db.logs.filter(l => l.code == code);
+        let h = `<div style="direction:rtl; padding:20px;"><h2>كارتة صنف: ${item.n}</h2><table border="1" style="width:100%; border-collapse:collapse; text-align:center;">
+                <thead><tr><th>التاريخ</th><th>النوع</th><th>الكمية</th><th>الإذن</th><th>المسؤول</th></tr></thead><tbody>`;
+        let b = 0; logs.forEach(l => { b += (l.t=='وارد'?l.q:-l.q); h += <tr><td>${l.dt}</td><td>${l.t}</td><td>${l.q}</td><td>${l.d}</td><td>${l.u}</td></tr>; });
+        h += </tbody></table><h3>الرصيد النهائي: ${b}</h3></div>;
+        document.getElementById('printView').innerHTML = h; window.print();
     }
-
-    function exportToExcel() {
-        let csv = "\uFEFFالكود,الصنف,الرصيد\n";
-        store.items.forEach(i => {
-            let b = 0; store.logs.forEach(l => { if(l.c==i.c) b += (l.t=='وارد'?l.q:-l.q); });
-            csv += ${i.c},${i.n},${b}\n;
-        });
-        let a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = "جرد.csv"; a.click();
-    }
-
-    function delItem(i) { if(confirm("حذف الصنف؟")) { store.items.splice(i,1); refreshUI(); } }
-
-    refreshUI();
+    render();
 </script>
 </body>
 </html>
