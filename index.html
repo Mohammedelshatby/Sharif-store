@@ -3,38 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GMS Pro | مخازن الشريف الجندي</title>
+    <title>GMS Pro | نظام مخازن الشريف</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; direction: rtl; text-align: right; margin: 0; }
+        :root {
+            --admin-color: #0f172a; /* كحلي شيك */
+            --user-color: #0284c7;  /* أزرق سماوي */
+            --bg: #f1f5f9;
+        }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 20px; direction: rtl; }
         .container { max-width: 1000px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; border-top: 5px solid #2563eb; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { padding: 12px 20px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; transition: 0.2s; }
-        .btn-main { background: #2563eb; color: white; width: 100%; }
+        
+        /* الهيدر */
+        .header { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-right: 8px solid var(--admin-color); }
+        
+        /* البطاقات */
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 20px; }
+        h3 { margin-top: 0; color: #334155; font-size: 18px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+
+        /* المدخلات */
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1.5px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; font-size: 16px; outline: none; }
+        input:focus { border-color: var(--user-color); }
+
+        /* الأزرار */
+        button { padding: 12px 20px; cursor: pointer; border: none; border-radius: 10px; font-weight: bold; transition: 0.3s; }
+        .btn-admin { background: var(--admin-color); color: white; }
+        .btn-user { background: var(--user-color); color: white; width: 100%; }
         .btn-green { background: #10b981; color: white; flex: 1; margin: 5px; }
         .btn-red { background: #ef4444; color: white; flex: 1; margin: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
-        th { background: #f8fafc; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 10px; }
+        
+        /* نظام الصلاحيات - الإخفاء الافتراضي */
+        .admin-only { display: none; }
+
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 15px; overflow: hidden; }
+        th, td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+        th { background: #f8fafc; color: #64748b; }
     </style>
 </head>
 <body>
+
 <div class="container">
     <div class="header">
-        <h1 id="stName">مخازن الشريف الجندي</h1>
-        <button style="background:#64748b; color:white;" onclick="changeName()">⚙ تغيير الاسم</button>
+        <div>
+            <h1 id="stName" style="margin:0; font-size:22px;">مخازن الشريف الجندي</h1>
+            <small id="userStatus" style="color: #64748b;">وضع الموظف (عرض فقط للعمليات)</small>
+        </div>
+        <button class="btn-admin" id="loginBtn" onclick="adminLogin()">🔑 دخول المدير</button>
+        <button class="btn-red admin-only" id="logoutBtn" onclick="logout()">خروج</button>
     </div>
 
     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-        <div class="card" style="flex: 1; min-width: 300px;">
-            <h3>📦 إضافة صنف</h3>
-            <input type="text" id="itemName" placeholder="اسم الصنف">
-            <input type="text" id="itemCode" placeholder="الكود">
-            <button class="btn-main" onclick="addItemNow()">حفظ الصنف</button>
+        <div class="card admin-only" style="flex: 1; min-width: 300px;" id="adminPanel">
+            <h3>📦 لوحة التحكم (المدير)</h3>
+            <input type="text" id="itemName" placeholder="اسم الصنف الجديد">
+            <input type="text" id="itemCode" placeholder="كود الصنف">
+            <button class="btn-user" onclick="addItemNow()">إضافة الصنف للمخزن</button>
+            <button class="btn-admin" style="width:100%; margin-top:10px;" onclick="changeName()">تغيير اسم المنشأة</button>
         </div>
+
         <div class="card" style="flex: 1; min-width: 300px;">
-            <h3>🔃 وارد وصرف</h3>
+            <h3>🔃 حركة المخزن (وارد / صرف)</h3>
             <select id="itemSelect"></select>
             <input type="number" id="qtyInput" placeholder="الكمية">
             <div style="display: flex;">
@@ -45,50 +72,94 @@
     </div>
 
     <div class="card">
-        <div style="display:flex; justify-content:space-between;">
-            <h3>📊 الرصيد</h3>
-            <button onclick="exportExcel()" style="background:#000; color:#fff;">إكسيل 📊</button>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3>📊 جدول الجرد العام</h3>
+            <button onclick="exportExcel()" style="background:#000; color:#fff;">تصدير جرد (Excel)</button>
         </div>
         <table>
-            <thead><tr><th>الكود</th><th>الصنف</th><th>الرصيد</th><th>حذف</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>الكود</th>
+                    <th>الصنف</th>
+                    <th>الرصيد</th>
+                    <th class="admin-only">إجراء</th>
+                </tr>
+            </thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    var data = JSON.parse(localStorage.getItem('gms_final_v1')) || { items: [], logs: [], name: "مخازن الشريف الجندي" };
+    var data = JSON.parse(localStorage.getItem('gms_final_v2')) || { items: [], logs: [], name: "مخازن الشريف الجندي" };
+    var isAdmin = false;
+
+    // دالة دخول المدير
+    function adminLogin() {
+        var pass = prompt("أدخل كلمة مرور المدير:");
+        if (pass === "123") { // يمكنك تغيير كلمة السر هنا
+            isAdmin = true;
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+            document.getElementById('loginBtn').style.display = 'none';
+            document.getElementById('userStatus').innerText = "وضع المدير (كامل الصلاحيات)";
+            refresh();
+        } else {
+            alert("كلمة مرور خاطئة!");
+        }
+    }
+
+    function logout() {
+        location.reload(); // إعادة تحميل الصفحة للخروج
+    }
+
     function refresh() {
-        localStorage.setItem('gms_final_v1', JSON.stringify(data));
+        localStorage.setItem('gms_final_v2', JSON.stringify(data));
         document.getElementById('stName').innerText = data.name;
         var body = document.getElementById('tableBody');
         var sel = document.getElementById('itemSelect');
-        body.innerHTML = ""; sel.innerHTML = '<option value="">-- اختر --</option>';
+        body.innerHTML = ""; 
+        sel.innerHTML = '<option value="">-- اختر الصنف --</option>';
+
         data.items.forEach(function(item, index) {
             var total = 0;
             data.logs.forEach(function(l) { if(l.code == item.code) total += (l.type == 'وارد' ? l.qty : -l.qty); });
-            body.innerHTML += "<tr><td>"+item.code+"</td><td><b>"+item.name+"</b></td><td>"+total+"</td><td><button onclick='delItem("+index+")'>❌</button></td></tr>";
+            
+            var row = "<tr><td>"+item.code+"</td><td><b>"+item.name+"</b></td><td>"+total+"</td>";
+            if(isAdmin) {
+                row += "<td><button style='color:red; background:none; cursor:pointer;' onclick='delItem("+index+")'>🗑</button></td>";
+            } else {
+                row += "<td>-</td>";
+            }
+            row += "</tr>";
+            
+            body.innerHTML += row;
             sel.innerHTML += "<option value='"+item.code+"'>"+item.name+"</option>";
         });
     }
+
     function addItemNow() {
         var n = document.getElementById('itemName').value, c = document.getElementById('itemCode').value;
         if(n && c) { data.items.push({name:n, code:c}); refresh(); document.getElementById('itemName').value=''; document.getElementById('itemCode').value=''; }
     }
+
     function logAction(type) {
         var c = document.getElementById('itemSelect').value, q = parseFloat(document.getElementById('qtyInput').value);
-        if(c && q) { data.logs.push({code:c, qty:q, type:type}); refresh(); document.getElementById('qtyInput').value=''; }
+        if(c && q) { data.logs.push({code:c, qty:q, type:type}); refresh(); document.getElementById('qtyInput').value=''; alert("تم تسجيل الـ " + type); }
     }
-    function delItem(i) { if(confirm("حذف؟")) { data.items.splice(i, 1); refresh(); } }
-    function changeName() { var n = prompt("الاسم الجديد:", data.name); if(n) { data.name = n; refresh(); } }
+
+    function delItem(i) { if(confirm("حذف الصنف نهائياً؟")) { data.items.splice(i, 1); refresh(); } }
+
+    function changeName() { var n = prompt("الاسم الجديد للمنشأة:", data.name); if(n) { data.name = n; refresh(); } }
+
     function exportExcel() {
         var csv = "\uFEFFالكود,الصنف,الرصيد\n";
         data.items.forEach(function(it) {
             var t = 0; data.logs.forEach(function(l){ if(l.code==it.code) t += (l.type=='وارد'?l.qty:-l.qty); });
             csv += it.code + "," + it.name + "," + t + "\n";
         });
-        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;'})); a.download = "مخزن.csv"; a.click();
+        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;'})); a.download = "جرد_المخزن.csv"; a.click();
     }
+
     refresh();
 </script>
 </body>
