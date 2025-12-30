@@ -3,29 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الشريف للمخازن | V5</title>
+    <title>GMS V6 | نظام الشريف الجندي</title>
     <style>
-        :root { --primary: #0f172a; --accent: #3b82f6; --bg: #f8fafc; }
+        :root { --main: #1e293b; --accent: #2563eb; --bg: #f8fafc; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 15px; direction: rtl; }
         .container { max-width: 1100px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .header { background: var(--primary); color: white; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .header { background: var(--main); color: white; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
         button { padding: 12px 20px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; color: white; transition: 0.3s; }
         .btn-blue { background: var(--accent); }
         .btn-green { background: #10b981; width: 100%; }
         .btn-red { background: #ef4444; }
-        .admin-only { display: none; } /* مخفي افتراضياً */
+        .admin-box { display: none; border: 2px solid var(--accent); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: center; }
-        th { background: #f1f5f9; color: var(--primary); }
-        
-        /* إعدادات الطباعة */
-        @media print {
-            .no-print { display: none !important; }
-            .print-area { display: block !important; width: 100%; }
-            .card { box-shadow: none; border: 1px solid #eee; }
-        }
+        th { background: #f1f5f9; color: var(--main); }
+        @media print { .no-print { display: none !important; } .print-area { display: block !important; } }
         .print-area { display: none; }
     </style>
 </head>
@@ -35,32 +29,34 @@
     <div class="header">
         <div>
             <h1 style="margin:0;">مخازن الشريف الجندي</h1>
-            <p id="statusTxt" style="margin:5px 0 0 0; color:#94a3b8;">يرجى تسجيل الدخول للبدء</p>
+            <p id="userLabel" style="margin:5px 0 0 0; color:#cbd5e1;">الحالة: سجل دخولك الآن</p>
         </div>
-        <button class="btn-blue" id="loginBtn" onclick="loginSystem()">🔐 دخول للنظام</button>
-        <button class="btn-red" id="logoutBtn" style="display:none;" onclick="location.reload()">تسجيل خروج</button>
+        <div id="authArea">
+            <button class="btn-blue" id="loginBtn" onclick="openLogin()">🔐 دخول النظام</button>
+            <button class="btn-red" id="logoutBtn" style="display:none;" onclick="location.reload()">خروج</button>
+        </div>
     </div>
 
-    <div id="adminBox" class="admin-only card" style="border: 2px dashed #3b82f6;">
-        <h3 style="margin-top:0; color:#3b82f6;">⚙ إعدادات المدير</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-            <div>
-                <label>إضافة موظف:</label>
-                <input type="text" id="stU" placeholder="الاسم">
-                <input type="password" id="stP" placeholder="الرمز">
-                <button class="btn-green" onclick="addStaff()">حفظ موظف</button>
+    <div id="adminPanel" class="admin-box no-print">
+        <h3 style="margin-top:0;">⚙ إعدادات المدير</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+            <div class="card">
+                <h4>إضافة صنف</h4>
+                <input type="text" id="itName" placeholder="اسم الصنف">
+                <input type="text" id="itCode" placeholder="كود الصنف">
+                <button class="btn-green" onclick="addItem()">+ حفظ الصنف</button>
             </div>
-            <div>
-                <label>إضافة عميل/مورد:</label>
-                <input type="text" id="enN" placeholder="الاسم الكامل">
-                <select id="enT"><option value="عميل">عميل</option><option value="مورد">مورد</option></select>
-                <button class="btn-green" onclick="addEntity()" style="background:#6366f1;">حفظ الطرف</button>
+            <div class="card">
+                <h4>إضافة موظف</h4>
+                <input type="text" id="stName" placeholder="اسم الموظف">
+                <input type="text" id="stPass" placeholder="كلمة المرور">
+                <button class="btn-blue" style="width:100%" onclick="addStaff()">+ حفظ موظف</button>
             </div>
-            <div>
-                <label>إضافة صنف جديد:</label>
-                <input type="text" id="itN" placeholder="اسم الصنف">
-                <input type="text" id="itC" placeholder="كود الصنف">
-                <button class="btn-green" onclick="addItem()" style="background:#0f172a;">إضافة صنف</button>
+            <div class="card">
+                <h4>عميل / مورد</h4>
+                <input type="text" id="enName" placeholder="الاسم">
+                <select id="enType"><option value="عميل">عميل</option><option value="مورد">مورد</option></select>
+                <button class="btn-green" onclick="addEntity()" style="background:#6366f1;">+ حفظ</button>
             </div>
         </div>
     </div>
@@ -68,10 +64,10 @@
     <div class="card">
         <h3>🔃 تسجيل حركة (وارد / صرف)</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <select id="selIt"><option value="">-- اختر الصنف --</option></select>
-            <input type="text" id="docN" placeholder="رقم الإذن">
+            <select id="selItem"><option value="">-- اختر الصنف --</option></select>
+            <input type="text" id="docId" placeholder="رقم الإذن">
             <input type="number" id="qty" placeholder="الكمية">
-            <select id="selEn"><option value="">-- العميل/المورد --</option></select>
+            <select id="selEnt"><option value="">-- العميل / المورد --</option></select>
         </div>
         <div style="display: flex; gap: 10px; margin-top: 15px;">
             <button onclick="saveLog('وارد')" style="flex:1; background:#10b981;">وارد (+)</button>
@@ -80,10 +76,10 @@
     </div>
 
     <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
             <h3>📊 الرصيد الحالي</h3>
             <div style="display:flex; gap:10px;">
-                <input type="text" id="search" placeholder="بحث..." onkeyup="ui()" style="width:200px; margin:0;">
+                <input type="text" id="search" placeholder="بحث..." onkeyup="refreshUI()" style="width:200px; margin:0;">
                 <button onclick="window.print()" style="background:#64748b;">🖨 طباعة الجرد</button>
             </div>
         </div>
@@ -94,71 +90,71 @@
     </div>
 </div>
 
-<div id="pView" class="print-area"></div>
+<div id="printArea" class="print-area"></div>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('SHARIF_V5')) || { items:[], logs:[], staff:[], entities:[], pass:"123" };
-    let user = null;
+    let db = JSON.parse(localStorage.getItem('SHARIF_V6')) || { items:[], logs:[], staff:[], entities:[], adminPass:"123" };
+    let activeUser = null;
 
-    function loginSystem() {
-        let u = prompt("اسم المستخدم (admin للمدير):");
+    function openLogin() {
+        let u = prompt("اسم المستخدم:");
         let p = prompt("كلمة المرور:");
-        if(u === "admin" && p === db.pass) { user = {n:"المدير", r:"admin"}; }
-        else { let s = db.staff.find(x => x.u === u && x.p === p); if(s) user = {n:u, r:"staff"}; }
+        if(u === "admin" && p === db.adminPass) { activeUser = {n:"المدير", r:"admin"}; }
+        else { 
+            let s = db.staff.find(x => x.u === u && x.p === p);
+            if(s) activeUser = {n:u, r:"staff"};
+        }
 
-        if(user) {
-            document.getElementById('loginBtn').style.display="none";
-            document.getElementById('logoutBtn').style.display="inline-block";
-            document.getElementById('statusTxt').innerText = "مرحباً: " + user.n;
-            document.getElementById('statusTxt').style.color = "#10b981";
-            if(user.r === "admin") document.getElementById('adminBox').style.display="block";
-            ui();
-        } else { alert("خطأ في البيانات!"); }
+        if(activeUser) {
+            document.getElementById('loginBtn').style.display = "none";
+            document.getElementById('logoutBtn').style.display = "inline-block";
+            document.getElementById('userLabel').innerText = "مرحباً: " + activeUser.n;
+            document.getElementById('userLabel').style.color = "#10b981";
+            if(activeUser.r === "admin") document.getElementById('adminPanel').style.display = "block";
+            refreshUI();
+        } else { alert("خطأ في بيانات الدخول!"); }
     }
 
-    function ui() {
-        localStorage.setItem('SHARIF_V5', JSON.stringify(db));
+    function refreshUI() {
+        localStorage.setItem('SHARIF_V6', JSON.stringify(db));
         let q = document.getElementById('search').value.toLowerCase();
+        document.getElementById('selItem').innerHTML = '<option value="">-- اختر صنف --</option>' + db.items.map(i => <option value="${i.c}">${i.n}</option>).join('');
+        document.getElementById('selEnt').innerHTML = '<option value="">-- العميل / المورد --</option>' + db.entities.map(e => <option value="${e.n}">${e.n}</option>).join('');
         
-        // تحديث القوائم
-        document.getElementById('selIt').innerHTML = '<option value="">-- اختر صنف --</option>' + db.items.map(i => <option value="${i.c}">${i.n}</option>).join('');
-        document.getElementById('selEn').innerHTML = '<option value="">-- العميل/المورد --</option>' + db.entities.map(e => <option value="${e.n}">${e.n}</option>).join('');
-
-        // تحديث الجدول
-        let h = "";
+        let html = "";
         db.items.forEach((it, idx) => {
             if(it.n.toLowerCase().includes(q) || it.c.toLowerCase().includes(q)) {
                 let bal = 0; db.logs.forEach(l => { if(l.c==it.c) bal += (l.t=='وارد'?l.q:-l.q); });
-                h += `<tr><td>${it.c}</td><td><b>${it.n}</b></td><td>${bal}</td>
-                <td><button onclick="printCard('${it.c}')" style="background:#3b82f6; padding:5px 10px;">كارتة</button>
-                ${user?.r=='admin'?<button onclick="delI(${idx})" style="color:red; background:none;">🗑</button>:''}</td></tr>`;
+                html += `<tr><td>${it.c}</td><td><b>${it.n}</b></td><td>${bal}</td>
+                <td><button onclick="printCard('${it.c}')" style="background:var(--accent); padding:5px 10px;">كارتة</button>
+                ${activeUser?.r=='admin'?<button onclick="delI(${idx})" style="color:red; background:none; font-size:18px;">🗑</button>:''}</td></tr>`;
             }
         });
-        document.getElementById('tbody').innerHTML = h;
+        document.getElementById('tbody').innerHTML = html;
     }
 
-    function saveLog(t) {
-        if(!user) return alert("سجل دخول أولاً");
-        let c=document.getElementById('selIt').value, q=parseFloat(document.getElementById('qty').value), d=document.getElementById('docN').value, e=document.getElementById('selEn').value;
-        if(c && q && d) { db.logs.push({c,q,t,d,e,u:user.n, dt:new Date().toLocaleString()}); ui(); alert("تم الحفظ"); }
-        else { alert("أكمل البيانات"); }
+    function saveLog(type) {
+        if(!activeUser) return alert("سجل دخول أولاً!");
+        let c=document.getElementById('selItem').value, q=parseFloat(document.getElementById('qty').value), d=document.getElementById('docId').value, e=document.getElementById('selEnt').value;
+        if(c && q && d) { db.logs.push({c,q,t:type,d,e,u:activeUser.n,dt:new Date().toLocaleString()}); refreshUI(); alert("تم الحفظ"); }
+        else alert("أكمل البيانات");
     }
 
-    function addItem() { let n=document.getElementById('itN').value, c=document.getElementById('itC').value; if(n&&c){db.items.push({n,c}); ui(); alert("تم");} }
-    function addStaff() { let u=document.getElementById('stU').value, p=document.getElementById('stP').value; if(u&&p){db.staff.push({u,p}); ui(); alert("تم");} }
-    function addEntity() { let n=document.getElementById('enN').value, t=document.getElementById('enT').value; if(n){db.entities.push({n,t}); ui(); alert("تم");} }
-    function delI(i) { if(confirm("حذف؟")){db.items.splice(i,1); ui();} }
+    function addItem() { let n=document.getElementById('itName').value, c=document.getElementById('itCode').value; if(n&&c){db.items.push({n,c}); refreshUI(); alert("تم");} }
+    function addStaff() { let u=document.getElementById('stName').value, p=document.getElementById('stPass').value; if(u&&p){db.staff.push({u,p}); refreshUI(); alert("تم");} }
+    function addEntity() { let n=document.getElementById('enName').value, t=document.getElementById('enType').value; if(n){db.entities.push({n,t}); refreshUI(); alert("تم");} }
+    function delI(i) { if(confirm("حذف؟")){db.items.splice(i,1); refreshUI();} }
 
     function printCard(code) {
         let it = db.items.find(x=>x.c==code);
         let logs = db.logs.filter(l=>l.c==code);
-        let h = `<div style="direction:rtl; padding:20px;"><h2>كارتة صنف: ${it.n} (${code})</h2><table border="1" style="width:100%; border-collapse:collapse; text-align:center;">
-        <thead><tr><th>التاريخ</th><th>النوع</th><th>الكمية</th><th>رقم الإذن</th><th>المسؤول</th></tr></thead><tbody>`;
+        let h = `<div style="direction:rtl; padding:20px; font-family:sans-serif;"><h2>تقرير كارتة صنف: ${it.n}</h2><table border="1" style="width:100%; border-collapse:collapse; text-align:center;">
+        <thead><tr><th>التاريخ</th><th>النوع</th><th>الكمية</th><th>الإذن</th><th>المسؤول</th></tr></thead><tbody>`;
         let b=0; logs.forEach(l=>{ b+=(l.t=='وارد'?l.q:-l.q); h+=<tr><td>${l.dt}</td><td>${l.t}</td><td>${l.q}</td><td>${l.d}</td><td>${l.u}</td></tr>; });
-        h += </tbody></table><h3>الرصيد النهائي: ${b}</h3></div>;
-        document.getElementById('pView').innerHTML = h; window.print();
+        h += </tbody></table><h3>الرصيد الحالي: ${b}</h3></div>;
+        document.getElementById('printArea').innerHTML = h; window.print();
     }
-    ui();
+    refreshUI();
 </script>
 </body>
 </html>
