@@ -3,223 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الشريف الجندي | الإصدار المباشر</title>
+    <title>نظام الشريف الجندي | V13 المطور</title>
     <style>
-        :root { --gold: #d4af37; --black: #0a0a0a; --dark: #1a1a1a; --white: #ffffff; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--black); color: var(--white); margin: 0; direction: rtl; }
+        :root { --gold: #d4af37; --black: #0c0c0c; --dark: #1a1a1a; --white: #ffffff; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--black); color: var(--white); margin: 0; direction: rtl; }
         
-        header { background: var(--dark); border-bottom: 3px solid var(--gold); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        header { background: var(--dark); border-bottom: 3px solid var(--gold); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         .container { display: flex; min-height: 100vh; }
-        .sidebar { width: 260px; background: var(--dark); padding: 20px; border-left: 1px solid #333; }
         
+        /* القائمة الجانبية */
+        .sidebar { width: 260px; background: var(--dark); padding: 20px; border-left: 1px solid #333; flex-shrink: 0; }
         .btn-side { 
             width: 100%; padding: 15px; margin-bottom: 12px; background: transparent; 
             color: var(--gold); border: 1px solid var(--gold); border-radius: 8px; 
-            cursor: pointer; font-weight: bold; text-align: right; transition: 0.3s;
+            cursor: pointer; font-weight: bold; text-align: right; transition: 0.3s; font-size: 15px;
         }
-        .btn-side:hover { background: var(--gold); color: black; }
+        .btn-side:hover { background: var(--gold); color: black; box-shadow: 0 0 10px var(--gold); }
         
-        .main-view { flex: 1; padding: 30px; }
-        .card { background: #111; padding: 20px; border-radius: 10px; border: 1px solid #333; margin-bottom: 20px; }
+        /* المنطقة الرئيسية */
+        .main-view { flex: 1; padding: 30px; background: var(--black); }
+        .card { background: var(--dark); padding: 25px; border-radius: 12px; border: 1px solid #333; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         
-        input, select { width: 100%; padding: 12px; margin: 10px 0; background: #222; border: 1px solid var(--gold); color: white; border-radius: 5px; box-sizing: border-box; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; border: 1px solid var(--gold); }
-        th { background: var(--gold); color: black; padding: 12px; }
-        td { border: 1px solid #333; padding: 10px; text-align: center; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; background: #222; border: 1px solid var(--gold); color: white; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
+        
+        /* الجداول */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #111; border: 1px solid #444; }
+        th { background: var(--gold); color: black; padding: 15px; font-weight: bold; }
+        td { border: 1px solid #333; padding: 12px; text-align: center; }
+        tr:hover { background: #1a1a1a; }
 
-        .admin-only { display: none; margin-top: 20px; border: 2px dashed var(--gold); padding: 20px; background: #050505; }
-        .modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--dark); padding:30px; border:2px solid var(--gold); z-index:1000; width:80%; max-height:80vh; overflow-y:auto; border-radius:15px; }
-        .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:999; }
+        /* الأوضاع الخاصة */
+        .admin-only { display: none; }
+        .modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--dark); padding:30px; border:2px solid var(--gold); z-index:1001; width:85%; max-height:85vh; overflow-y:auto; border-radius:15px; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+        .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:1000; }
         
-        .status-bar { position: fixed; bottom: 0; width: 100%; background: var(--gold); color: black; padding: 5px 20px; font-weight: bold; display: flex; justify-content: space-between; }
+        .status-bar { position: fixed; bottom: 0; width: 100%; background: var(--gold); color: black; padding: 6px 20px; font-weight: bold; display: flex; justify-content: space-between; font-size: 13px; z-index: 999; }
+        .btn-action { padding: 5px 10px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; margin: 0 2px; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1 id="storeTitle" style="color:var(--gold); margin:0;">مؤسسة الشريف الجندي</h1>
-    <div style="color:var(--gold)" id="modeText">وضع الموظف</div>
+    <div style="display:flex; align-items:center; gap:15px;">
+        <h1 id="storeTitle" style="color:var(--gold); margin:0; font-size: 28px;">مؤسسة الشريف الجندي</h1>
+    </div>
+    <div id="modeDisplay" style="color:var(--gold); font-weight:bold; border:1px solid var(--gold); padding:5px 15px; border-radius:20px;">👤 وضع الموظف</div>
 </header>
 
 <div class="container">
     <div class="sidebar">
-        <button class="btn-side" onclick="openM('addIt')">تكويد الأصناف</button>
-        <button class="btn-side" onclick="openM('addIn')">إذن إضافة (وارد)</button>
-        <button class="btn-side" onclick="openM('addOut')">إذن صرف (صادر)</button>
-        <button class="btn-side" onclick="openM('report')">جرد المخازن</button>
+        <button class="btn-side" onclick="openModal('modalAddIt')">📦 تكويد الأصناف</button>
+        <button class="btn-side" onclick="openModal('modalIn')">📥 إذن إضافة (وارد)</button>
+        <button class="btn-side" onclick="openModal('modalOut')">📤 إذن صرف (صادر)</button>
+        <button class="btn-side" onclick="openModal('modalRep')">📊 جرد المخازن</button>
         
-        <hr style="border-color:#333">
-        <button id="toAdminBtn" class="btn-side" style="background:var(--gold); color:black;" onclick="askAdmin()">دخول المدير (2525)</button>
-        <button id="exitAdminBtn" class="btn-side" style="display:none; background:red; color:white;" onclick="exitAdmin()">خروج من وضع المدير</button>
+        <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
+        
+        <button id="btnEnterAdmin" class="btn-side" style="background:var(--gold); color:black;" onclick="requestAdmin()">🔐 دخول المدير</button>
+        <button id="btnExitAdmin" class="btn-side" style="display:none; background:#9d2d2d; color:white; border-color:#9d2d2d;" onclick="exitAdmin()">🔓 خروج المدير</button>
     </div>
 
     <div class="main-view">
-        <div id="adminPanel" class="admin-only">
-            <h2 style="color:var(--gold)">⚙ لوحة التحكم الكاملة (المدير)</h2>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px">
-                <div class="card">
+        <div id="panelAdmin" class="admin-only card">
+            <h2 style="color:var(--gold); margin-top:0;">⚙ لوحة التحكم الكاملة (المدير)</h2>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
+                <div style="border:1px solid #444; padding:15px; border-radius:10px;">
                     <h4>تغيير اسم المنشأة</h4>
-                    <input type="text" id="newTitle" placeholder="اكتب الاسم الجديد">
-                    <button class="btn-side" style="text-align:center" onclick="changeT()">تحديث الاسم</button>
+                    <input type="text" id="inpStoreName" placeholder="الاسم الجديد">
+                    <button class="btn-side" style="text-align:center; margin:0;" onclick="updateStoreTitle()">تحديث الاسم</button>
                 </div>
-                <div class="card">
-                    <h4>إدارة العمليات</h4>
-                    <p>يمكنك الآن حذف أي إذن من جدول الجرد أو التحكم الشامل.</p>
+                <div style="border:1px solid #444; padding:15px; border-radius:10px;">
+                    <h4>إحصائيات سريعة</h4>
+                    <p id="statInfo">تحميل البيانات...</p>
                 </div>
             </div>
-            <div id="masterLogTable"></div>
+            
+            <h3>📑 سجل العمليات بالكامل (حذف وتعديل)</h3>
+            <div id="adminLogView" style="overflow-x:auto;"></div>
         </div>
 
-        <div id="welcomeMsg" class="card">
-            <h2>مرحباً بك في النظام الملكي</h2>
-            <p>يمكنك البدء بتسجيل العمليات من القائمة الجانبية. للدخول بصلاحيات المدير، اضغط على الزر الذهبي بالأسفل.</p>
+        <div id="welcomeScreen" class="card">
+            <h2 style="color:var(--gold)">مرحباً بك في نظام الإدارة</h2>
+            <p>النظام مفعل بالكامل. الرجاء اختيار العملية المطلوبة من القائمة الجانبية.</p>
+            <div style="margin-top:30px; display:flex; gap:20px; opacity:0.5;">
+                <div style="border:1px solid var(--gold); padding:20px; border-radius:10px; flex:1; text-align:center;">
+                    <h1 id="countItems">0</h1><p>صنف مسجل</p>
+                </div>
+                <div style="border:1px solid var(--gold); padding:20px; border-radius:10px; flex:1; text-align:center;">
+                    <h1 id="countLogs">0</h1><p>عملية مسجلة</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="status-bar">
-    <span>النظام: متصل</span>
-    <span id="clock"></span>
+    <span>حالة النظام: متصل <span style="color:green">●</span></span>
+    <span id="liveClock"></span>
 </div>
 
-<div class="overlay" onclick="closeM()"></div>
+<div class="overlay" id="uiOverlay" onclick="closeAllModals()"></div>
 
-<div id="addIt" class="modal">
-    <h3>تكويد صنف جديد</h3>
-    <input type="text" id="itN" placeholder="اسم الصنف">
-    <input type="text" id="itC" placeholder="كود الصنف">
-    <button class="btn-side" onclick="saveIt()">حفظ الصنف</button>
+<div id="modalAddIt" class="modal">
+    <h3>📦 إضافة صنف جديد للمخزن</h3>
+    <input type="text" id="newItName" placeholder="اسم الصنف">
+    <input type="text" id="newItCode" placeholder="كود الصنف">
+    <button class="btn-side" style="text-align:center" onclick="cmdAddIt()">حفظ الصنف</button>
 </div>
 
-<div id="addIn" class="modal">
-    <h3>إذن إضافة (وارد)</h3>
-    <select id="selIt1"></select>
-    <input type="number" id="q1" placeholder="الكمية">
-    <input type="text" id="cl1" placeholder="اسم المورد">
-    <button class="btn-side" onclick="saveLog('وارد')">تسجيل وارد</button>
+<div id="modalIn" class="modal">
+    <h3>📥 إذن إضافة صنف (وارد)</h3>
+    <select id="selItIn"></select>
+    <input type="number" id="inQty" placeholder="الكمية">
+    <input type="text" id="inClient" placeholder="اسم المورد">
+    <button class="btn-side" style="text-align:center; background:#2d5a27; color:white;" onclick="cmdSaveLog('وارد')">تأكيد الإضافة</button>
 </div>
 
-<div id="addOut" class="modal">
-    <h3>إذن صرف (صادر)</h3>
-    <select id="selIt2"></select>
-    <input type="number" id="q2" placeholder="الكمية">
-    <input type="text" id="cl2" placeholder="اسم العميل">
-    <button class="btn-side" onclick="saveLog('صرف')">تسجيل صرف</button>
+<div id="modalOut" class="modal">
+    <h3>📤 إذن صرف صنف (صادر)</h3>
+    <select id="selItOut"></select>
+    <input type="number" id="outQty" placeholder="الكمية">
+    <input type="text" id="outClient" placeholder="اسم العميل">
+    <button class="btn-side" style="text-align:center; background:#9d2d2d; color:white;" onclick="cmdSaveLog('صرف')">تأكيد الصرف</button>
 </div>
 
-<div id="report" class="modal">
-    <h3>تقرير جرد المخزن</h3>
-    <div id="repTable"></div>
+<div id="modalRep" class="modal">
+    <h3>📊 تقرير الجرد العام</h3>
+    <div id="inventoryContainer"></div>
 </div>
 
 <script>
-    // قاعدة البيانات المحدثة
-    let data = JSON.parse(localStorage.getItem('SHARIF_LIVE_V12')) || {
-        title: "مؤسسة الشريف الجندي",
+    // 1. إدارة البيانات
+    let db = JSON.parse(localStorage.getItem('SHARIF_V13_DB')) || {
+        storeName: "مؤسسة الشريف الجندي",
         items: [],
         logs: []
     };
 
-    let isAdmin = false;
+    let isMaster = false;
 
-    // وظيفة دخول المدير
-    function askAdmin() {
-        let p = prompt("برجاء إدخال كلمة سر المدير:");
-        if (p === "2525") {
-            isAdmin = true;
-            document.getElementById('adminPanel').style.display = 'block';
-            document.getElementById('toAdminBtn').style.display = 'none';
-            document.getElementById('exitAdminBtn').style.display = 'block';
-            document.getElementById('modeText').innerText = "وضع المدير (التحكم الكامل)";
-            document.getElementById('welcomeMsg').style.display = 'none';
-            showMasterLog();
-            alert("تم تفعيل صلاحيات المدير بنجاح");
-        } else {
-            alert("كلمة السر خطأ!");
+    // 2. تفعيل الدخول (إخفاء الباسورد)
+    function requestAdmin() {
+        let pass = prompt("برجاء إدخال كلمة سر المدير للتحكم الكامل:");
+        if (pass === "2525") {
+            isMaster = true;
+            document.getElementById('panelAdmin').style.display = 'block';
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('btnEnterAdmin').style.display = 'none';
+            document.getElementById('btnExitAdmin').style.display = 'block';
+            document.getElementById('modeDisplay').innerText = "👑 وضع المدير";
+            document.getElementById('modeDisplay').style.color = "white";
+            document.getElementById('modeDisplay').style.background = "#d4af37";
+            renderAdminLog();
+            alert("مرحباً بك يا مدير. تم فتح كافة الصلاحيات.");
+        } else if (pass !== null) {
+            alert("عذراً.. كلمة السر غير صحيحة.");
         }
     }
 
-    function exitAdmin() {
-        location.reload();
+    function exitAdmin() { location.reload(); }
+
+    // 3. تحديث الواجهة
+    function sync() {
+        localStorage.setItem('SHARIF_V13_DB', JSON.stringify(db));
+        document.getElementById('storeTitle').innerText = db.storeName;
+        document.getElementById('countItems').innerText = db.items.length;
+        document.getElementById('countLogs').innerText = db.logs.length;
+        
+        // تحديث قوائم الاختيار
+        let options = '<option value="">-- اختر الصنف --</option>';
+        db.items.forEach(it => { options += <option value="${it.c}">${it.n}</option>; });
+        document.getElementById('selItIn').innerHTML = options;
+        document.getElementById('selItOut').innerHTML = options;
     }
 
-    function updateUI() {
-        localStorage.setItem('SHARIF_LIVE_V12', JSON.stringify(data));
-        document.getElementById('storeTitle').innerText = data.title;
-        const ops = data.items.map(i => <option value="${i.c}">${i.n}</option>).join('');
-        document.getElementById('selIt1').innerHTML = ops;
-        document.getElementById('selIt2').innerHTML = ops;
+    // 4. العمليات (الأزرار)
+    function cmdAddIt() {
+        let n = document.getElementById('newItName').value;
+        let c = document.getElementById('newItCode').value;
+        if(n && c) {
+            db.items.push({n, c});
+            sync();
+            closeAllModals();
+            alert("تم إضافة الصنف بنجاح");
+            document.getElementById('newItName').value = ""; document.getElementById('newItCode').value = "";
+        } else { alert("يرجى ملء كافة الخانات"); }
     }
 
-    function saveIt() {
-        const n = document.getElementById('itN').value, c = document.getElementById('itC').value;
-        if(n && c) { data.items.push({n, c}); updateUI(); closeM(); alert("تم التكويد"); }
-    }
+    function cmdSaveLog(type) {
+        let c = (type === 'وارد') ? document.getElementById('selItIn').value : document.getElementById('selItOut').value;
+        let q = parseFloat((type === 'وارد') ? document.getElementById('inQty').value : document.getElementById('outQty').value);
+        let cl = (type === 'وارد') ? document.getElementById('inClient').value : document.getElementById('outClient').value;
 
-    function saveLog(t) {
-        const c = t === 'وارد' ? document.getElementById('selIt1').value : document.getElementById('selIt2').value;
-        const q = t === 'وارد' ? document.getElementById('q1').value : document.getElementById('q2').value;
-        const cl = t === 'وارد' ? document.getElementById('cl1').value : document.getElementById('cl2').value;
         if(c && q) {
-            data.logs.push({id: Date.now(), c, q:parseFloat(q), t, cl, dt: new Date().toLocaleString()});
-            updateUI(); closeM(); alert("تم تسجيل الإذن");
-            if(isAdmin) showMasterLog();
-        }
+            db.logs.push({ id: Date.now(), c, q, t: type, cl, dt: new Date().toLocaleString() });
+            sync();
+            closeAllModals();
+            alert("تم تسجيل العملية");
+            if(isMaster) renderAdminLog();
+        } else { alert("يرجى اختيار الصنف والكمية"); }
     }
 
-    function showMasterLog() {
+    function renderAdminLog() {
         let h = <table><tr><th>التاريخ</th><th>الصنف</th><th>الكمية</th><th>النوع</th><th>الجهة</th><th>إجراء</th></tr>;
-        data.logs.forEach(l => {
-            const it = data.items.find(x => x.c == l.c);
-            h += `<tr><td>${l.dt}</td><td>${it?it.n:l.c}</td><td>${l.q}</td><td>${l.t}</td><td>${l.cl||'-'}</td>
-            <td><button onclick="delLog(${l.id})" style="color:red; background:none; border:none; cursor:pointer">🗑 حذف</button></td></tr>`;
+        db.logs.slice().reverse().forEach(l => {
+            let it = db.items.find(x => x.c == l.c);
+            h += `<tr><td>${l.dt}</td><td>${it?it.n:'صنف محذوف'}</td><td>${l.q}</td>
+            <td style="color:${l.t=='وارد'?'#10b981':'#ff4d4d'}">${l.t}</td><td>${l.cl||'-'}</td>
+            <td><button onclick="cmdDelLog(${l.id})" class="btn-action" style="background:#ff4d4d; color:white;">حذف</button></td></tr>`;
         });
-        document.getElementById('masterLogTable').innerHTML = h + </table>;
+        document.getElementById('adminLogView').innerHTML = h + </table>;
+        document.getElementById('statInfo').innerText = إجمالي العمليات: ${db.logs.length} | إجمالي الأصناف: ${db.items.length};
     }
 
-    function delLog(id) {
-        if(confirm("هل أنت متأكد من حذف هذا الإذن نهائياً؟")) {
-            data.logs = data.logs.filter(x => x.id !== id);
-            updateUI();
-            showMasterLog();
+    function cmdDelLog(id) {
+        if(confirm("هل تريد حذف هذا الإذن نهائياً؟")) {
+            db.logs = db.logs.filter(x => x.id !== id);
+            sync();
+            renderAdminLog();
         }
     }
 
-    function changeT() {
-        const n = document.getElementById('newTitle').value;
-        if(n) { data.title = n; updateUI(); alert("تم تغيير الاسم"); }
+    function updateStoreTitle() {
+        let t = document.getElementById('inpStoreName').value;
+        if(t) { db.storeName = t; sync(); alert("تم تحديث اسم المنشأة"); }
     }
 
-    function openM(id) {
-        if(id === 'report') {
-            let h = <table><tr><th>الكود</th><th>الصنف</th><th>الرصيد الحالي</th><th>أدوات</th></tr>;
-            data.items.forEach(i => {
-                let b = 0; data.logs.forEach(l => { if(l.c == i.c) b += (l.t == 'وارد' ? l.q : -l.q); });
-                h += `<tr><td>${i.c}</td><td>${i.n}</td><td style="color:${b<0?'red':'#10b981'}">${b}</td>
-                <td><button onclick="printCard('${i.c}')" style="background:var(--gold); color:black; border:none; padding:5px; cursor:pointer">🖨 كارتة</button></td></tr>`;
-            });
-            document.getElementById('repTable').innerHTML = h + </table>;
-        }
-        document.getElementById(id).style.display='block'; document.querySelector('.overlay').style.display='block';
+    // 5. وظائف النوافذ
+    function openModal(id) {
+        if(id === 'modalRep') renderInventory();
+        document.getElementById(id).style.display = 'block';
+        document.getElementById('uiOverlay').style.display = 'block';
     }
 
-    function closeM() { document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); document.querySelector('.overlay').style.display='none'; }
-
-    function printCard(code) {
-        const it = data.items.find(x => x.c == code);
-        const logs = data.logs.filter(l => l.c == code);
-        let win = window.open('', '', 'height=700,width=900');
-        win.document.write(<html><head><title>كارتة صنف</title></head><body dir="rtl" style="font-family:sans-serif; padding:20px;">);
-        win.document.write(<h1>كارتة صنف: ${it.n}</h1><table border="1" width="100%" style="border-collapse:collapse; text-align:center;">);
-        win.document.write(<tr><th>التاريخ</th><th>النوع</th><th>الكمية</th><th>الجهة</th></tr>);
-        let b = 0;
-        logs.forEach(l => { b += (l.t == 'وارد' ? l.q : -l.q); win.document.write(<tr><td>${l.dt}</td><td>${l.t}</td><td>${l.q}</td><td>${l.cl||'-'}</td></tr>); });
-        win.document.write(</table><h2>الرصيد النهائي: ${b}</h2></body></html>);
-        win.document.close(); win.print();
+    function closeAllModals() {
+        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+        document.getElementById('uiOverlay').style.display = 'none';
     }
 
-    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString(); }, 1000);
-    updateUI();
-</script>
-</body>
-</html>
+    function renderInventory() {
+        let h = <table><tr><th>الكود</th><th>الصنف</th><th>الرصيد الحالي</th><th>أدوات</th></tr>;
+        db.items.forEach(it => {
+            let bal = 0;
+            db.logs.forEach(l => { if(l.c == it.c) bal += (
