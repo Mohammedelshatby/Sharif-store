@@ -2,227 +2,130 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>نظام الشريف الجندي - التحكم الكامل V18</title>
+    <title>نظام الشريف الجندي - النسخة الميكانيكية V19</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { background: #000; color: #d4af37; font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 10px; }
-        .box { border: 2px solid #d4af37; padding: 15px; margin-bottom: 15px; background: #111; border-radius: 10px; }
-        .btn-gold { 
-            background: #d4af37; color: #000; padding: 12px; 
-            border: none; border-radius: 5px; font-weight: bold; 
-            font-size: 16px; cursor: pointer; margin: 5px; width: 45%; max-width: 200px;
+        body { background: #000; color: #d4af37; font-family: sans-serif; text-align: center; margin: 0; padding: 10px; }
+        .container { border: 2px solid #d4af37; padding: 15px; background: #111; border-radius: 10px; margin-bottom: 10px; }
+        .btn { 
+            background: #d4af37; color: #000; padding: 15px; 
+            border: 2px solid #fff; border-radius: 8px; font-weight: bold; 
+            font-size: 18px; cursor: pointer; margin: 5px; width: 90%; max-width: 300px;
+            display: inline-block;
         }
-        .modal { display:none; position:fixed; top:2%; left:2%; width:96%; height:96%; background:#1a1a1a; border:3px solid #d4af37; z-index:99999; padding:15px; overflow-y:auto; border-radius: 15px; box-sizing: border-box; }
-        input, select { width: 90%; padding: 10px; margin: 8px 0; background: #000; color: #fff; border: 1px solid #d4af37; border-radius: 5px; font-size: 16px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; color: #fff; font-size: 14px; }
-        th, td { border: 1px solid #d4af37; padding: 8px; text-align: center; }
-        .admin-badge { background: red; color: white; padding: 5px 10px; border-radius: 5px; display: none; margin-bottom: 10px; }
+        .btn:active { background: #fff; }
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; padding-top: 20px; overflow-y:auto; }
+        input, select { width: 85%; padding: 12px; margin: 10px 0; background: #222; color: #fff; border: 1px solid #d4af37; font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; color: #fff; background: #111; }
+        th, td { border: 1px solid #d4af37; padding: 10px; text-align: center; }
+        .admin-only { display: none; border: 2px dashed red; padding: 10px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h1 id="title">مؤسسة الشريف الجندي</h1>
-    <div id="adminBadge" class="admin-badge">وضع المدير - صلاحيات كاملة</div>
-    <p id="userDisplay">المستخدم الحالي: موظف</p>
-    <button id="switchBtn" class="btn-gold" style="background:#555; color:white; width:150px" onclick="loginSystem()">🔑 دخول المدير</button>
-    <button id="logoutBtn" class="btn-gold" style="background:red; color:white; width:150px; display:none;" onclick="logout()">🚪 تبديل لموظف</button>
+<div class="container">
+    <h1 id="mainTitle">مؤسسة الشريف الجندي</h1>
+    <p id="userLabel">الوضع الحالي: موظف</p>
+    <button class="btn" style="background:#444; color:white;" onclick="var p=prompt('باسورد المدير:'); if(p=='2525'){ document.getElementById('adminZone').style.display='block'; document.getElementById('userLabel').innerText='الوضع: مدير'; alert('تم التفعيل'); }else{alert('خطأ');}">🔑 دخول المدير (2525)</button>
+    <button class="btn" style="background:red; color:white; width:100px;" onclick="location.reload()">🔄 ريفرش</button>
 </div>
 
-<div class="box">
-    <button class="btn-gold" onclick="document.getElementById('m_it').style.display='block'">📦 تكويد صنف</button>
-    <button class="btn-gold" onclick="openAction('وارد')">📥 إذن إضافة</button>
-    <button class="btn-gold" onclick="openAction('صرف')">📤 إذن صرف</button>
-    <button class="btn-gold" onclick="showInventory()">📊 جرد المخزن</button>
-    <button id="masterBtn" class="btn-gold" style="display:none; background:white; color:black;" onclick="document.getElementById('admin_panel').style.display='block'; renderAdminLogs(); renderItemsControl();">⚙ لوحة التحكم</button>
+<div class="container">
+    <button class="btn" onclick="document.getElementById('m_add_item').style.display='block'">📦 تكويد صنف</button>
+    <button class="btn" onclick="openMove('وارد')">📥 إذن إضافة</button>
+    <button class="btn" onclick="openMove('صرف')">📤 إذن صرف</button>
+    <button class="btn" onclick="renderInv()">📊 جرد المخزن</button>
 </div>
 
-<div id="admin_panel" class="modal">
-    <h2 style="color:#d4af37">⚙ لوحة تحكم المدير</h2>
-    <div class="box">
-        <h3>تعديل/حذف الأصناف</h3>
-        <div id="items_control_view"></div>
-    </div>
-    <div class="box">
-        <h3>إضافة موظف جديد</h3>
-        <input type="text" id="staff_u" placeholder="اسم الموظف">
-        <input type="password" id="staff_p" placeholder="كلمة المرور">
-        <button class="btn-gold" onclick="addStaff()">حفظ الموظف</button>
-    </div>
-    <div class="box">
-        <h3>سجل العمليات العام</h3>
-        <button class="btn-gold" onclick="exportToExcel()">📊 تصدير لإكسيل</button>
-        <div id="logs_view"></div>
-    </div>
-    <button class="btn-gold" style="background:red" onclick="this.parentElement.style.display='none'">إغلاق</button>
+<div id="adminZone" class="admin-only">
+    <h2 style="color:red">⚙ لوحة التحكم</h2>
+    <button class="btn" onclick="exportExcel()">📊 تحميل إكسيل</button>
+    <button class="btn" onclick="renderAdminTools()">✏ تعديل/حذف الأصناف</button>
+    <div id="adminDisplay"></div>
 </div>
 
-<div id="m_it" class="modal">
-    <h2>📦 تكويد صنف جديد</h2>
-    <input type="text" id="it_n" placeholder="اسم الصنف">
-    <input type="text" id="it_c" placeholder="كود الصنف">
-    <button class="btn-gold" onclick="saveItem()">حفظ</button>
-    <button class="btn-gold" style="background:red" onclick="this.parentElement.style.display='none'">إغلاق</button>
+<div id="m_add_item" class="modal">
+    <h2>تكويد صنف جديد</h2>
+    <input type="text" id="it_name" placeholder="اسم الصنف">
+    <input type="text" id="it_code" placeholder="كود الصنف">
+    <button class="btn" onclick="saveNewItem()">حفظ</button>
+    <button class="btn" style="background:red" onclick="this.parentElement.style.display='none'">إغلاق</button>
 </div>
 
-<div id="m_edit_it" class="modal">
-    <h2>✏ تعديل صنف</h2>
-    <input type="hidden" id="edit_old_c">
-    <input type="text" id="edit_it_n" placeholder="اسم الصنف الجديد">
-    <input type="text" id="edit_it_c" placeholder="كود الصنف الجديد">
-    <button class="btn-gold" onclick="updateItem()">تحديث</button>
-    <button class="btn-gold" style="background:red" onclick="this.parentElement.style.display='none'">إلغاء</button>
-</div>
-
-<div id="m_act" class="modal">
-    <h2 id="act_title">حركة</h2>
-    <input type="text" id="doc_no" placeholder="رقم الإذن يدوي">
-    <select id="sel_act"></select>
-    <input type="number" id="qty_act" placeholder="الكمية">
-    <input type="text" id="cl_act" placeholder="الجهة">
-    <button class="btn-gold" onclick="saveLog()">تأكيد العملية</button>
-    <button class="btn-gold" style="background:red" onclick="this.parentElement.style.display='none'">إغلاق</button>
+<div id="m_move" class="modal">
+    <h2 id="move_title">حركة</h2>
+    <input type="text" id="doc_id" placeholder="رقم الإذن">
+    <select id="move_select"></select>
+    <input type="number" id="move_qty" placeholder="الكمية">
+    <input type="text" id="move_cl" placeholder="الجهة">
+    <button class="btn" onclick="saveMove()">تأكيد</button>
+    <button class="btn" style="background:red" onclick="this.parentElement.style.display='none'">إغلاق</button>
 </div>
 
 <div id="m_inv" class="modal">
-    <h2>📊 الجرد</h2>
-    <input type="text" id="search_it" placeholder="بحث بكود أو اسم..." onkeyup="filterInv()">
-    <div id="inv_table"></div>
-    <button class="btn-gold" style="background:red" onclick="this.parentElement.style.display='none'">إغلاق</button>
+    <h2>📊 الجرد والبحث</h2>
+    <input type="text" placeholder="بحث..." onkeyup="searchInv(this.value)">
+    <div id="inv_box"></div>
+    <button class="btn" style="background:red" onclick="this.parentElement.style.display='none'">إغلاق</button>
 </div>
 
 <script>
-    var db = JSON.parse(localStorage.getItem('SHARIF_V18')) || { 
-        name: "مؤسسة الشريف الجندي", 
-        items: [], 
-        logs: [], 
-        staff: [{u: "admin", p: "2525"}] 
-    };
-    var current_user = "موظف";
-    var is_admin = false;
+    var db = JSON.parse(localStorage.getItem('SHARIF_DB_V19')) || { name:"مؤسسة الشريف الجندي", items:[], logs:[] };
+    var activeMove = "";
 
-    function loginSystem() {
-        var u = prompt("اسم المستخدم:");
-        var p = prompt("كلمة المرور:");
-        var found = db.staff.find(x => x.u === u && x.p === p);
-        if(found) {
-            current_user = u;
-            is_admin = true;
-            document.getElementById('userDisplay').innerText = "المستخدم: " + u;
-            document.getElementById('adminBadge').style.display = 'block';
-            document.getElementById('masterBtn').style.display = 'inline-block';
-            document.getElementById('logoutBtn').style.display = 'inline-block';
-            document.getElementById('switchBtn').style.display = 'none';
-            alert("تم الدخول بصلاحيات المدير");
-        } else { alert("بيانات خاطئة!"); }
-    }
-
-    function logout() {
-        is_admin = false;
-        current_user = "موظف";
-        document.getElementById('userDisplay').innerText = "المستخدم: موظف";
-        document.getElementById('adminBadge').style.display = 'none';
-        document.getElementById('masterBtn').style.display = 'none';
-        document.getElementById('logoutBtn').style.display = 'none';
-        document.getElementById('switchBtn').style.display = 'inline-block';
-    }
-
-    function renderItemsControl() {
-        var h = '<table><tr><th>الكود</th><th>الصنف</th><th>تعديل</th><th>حذف</th></tr>';
-        db.items.forEach(function(i){
-            h += `<tr><td>${i.c}</td><td>${i.n}</td>
-            <td><button onclick="editItemForm('${i.c}','${i.n}')" style="background:orange; border:none; padding:5px; cursor:pointer">✏</button></td>
-            <td><button onclick="deleteItem('${i.c}')" style="background:red; color:white; border:none; padding:5px; cursor:pointer">🗑</button></td></tr>`;
-        });
-        document.getElementById('items_control_view').innerHTML = h + '</table>';
-    }
-
-    function editItemForm(oldC, oldN) {
-        document.getElementById('edit_old_c').value = oldC;
-        document.getElementById('edit_it_n').value = oldN;
-        document.getElementById('edit_it_c').value = oldC;
-        document.getElementById('m_edit_it').style.display = 'block';
-    }
-
-    function updateItem() {
-        var oldC = document.getElementById('edit_old_c').value;
-        var newN = document.getElementById('edit_it_n').value;
-        var newC = document.getElementById('edit_it_c').value;
-        
-        var it = db.items.find(x => x.c === oldC);
-        if(it) {
-            it.n = newN; it.c = newC;
-            db.logs.forEach(l => { if(l.c === oldC) l.c = newC; });
-            saveDB(); renderItemsControl();
-            document.getElementById('m_edit_it').style.display = 'none';
-            alert("تم تحديث الصنف وسجلاته");
-        }
-    }
-
-    function deleteItem(code) {
-        if(confirm("هل تريد حذف الصنف تماماً؟ سيتم حذف جميع سجلاته أيضاً!")) {
-            db.items = db.items.filter(x => x.c !== code);
-            db.logs = db.logs.filter(x => x.c !== code);
-            saveDB(); renderItemsControl();
-        }
-    }
-
-    function saveItem() {
-        var n = document.getElementById('it_n').value, c = document.getElementById('it_c').value;
+    function saveNewItem() {
+        var n = document.getElementById('it_name').value;
+        var c = document.getElementById('it_code').value;
         if(n && c) {
             db.items.push({n:n, c:c});
-            saveDB(); alert("تم التكويد");
-            document.getElementById('m_it').style.display='none';
+            save(); alert("تم التكويد"); document.getElementById('m_add_item').style.display='none';
         }
     }
 
-    function openAction(type) {
-        document.getElementById('act_title').innerText = "إذن " + type;
-        var s = document.getElementById('sel_act');
+    function openMove(t) {
+        activeMove = t;
+        document.getElementById('move_title').innerText = "إذن " + t;
+        var s = document.getElementById('move_select');
         s.innerHTML = db.items.map(i => <option value="${i.c}">${i.n}</option>).join('');
-        document.getElementById('m_act').style.display='block';
-        window.currentActionType = type;
+        document.getElementById('m_move').style.display='block';
     }
 
-    function saveLog() {
-        var d = document.getElementById('doc_no').value;
-        var c = document.getElementById('sel_act').value;
-        var q = document.getElementById('qty_act').value;
-        var cl = document.getElementById('cl_act').value;
+    function saveMove() {
+        var d = document.getElementById('doc_id').value;
+        var c = document.getElementById('move_select').value;
+        var q = document.getElementById('move_qty').value;
         if(d && c && q) {
-            db.logs.push({id:Date.now(), doc:d, c:c, q:parseFloat(q), t:window.currentActionType, cl:cl, u:current_user, dt:new Date().toLocaleString()});
-            saveDB(); alert("تم الحفظ");
-            document.getElementById('m_act').style.display='none';
+            db.logs.push({doc:d, c:c, q:parseFloat(q), t:activeMove, dt:new Date().toLocaleString()});
+            save(); alert("تم التسجيل"); document.getElementById('m_move').style.display='none';
         }
     }
 
-    function showInventory() {
-        renderInvTable(db.items);
+    function renderInv() {
+        var h = '<table><tr><th>الصنف</th><th>الرصيد</th></tr>';
+        db.items.forEach(i => {
+            var b = 0;
+            db.logs.forEach(l => { if(l.c==i.c) b += (l.t=='وارد'? l.q : -l.q); });
+            h += <tr><td>${i.n}</td><td>${b}</td></tr>;
+        });
+        document.getElementById('inv_box').innerHTML = h + '</table>';
         document.getElementById('m_inv').style.display='block';
     }
 
-    function renderInvTable(itemsList) {
-        var h = '<table><tr><th>الكود</th><th>الصنف</th><th>الرصيد</th></tr>';
-        itemsList.forEach(function(i){
-            var b = 0;
-            db.logs.forEach(function(l){ if(l.c==i.c) b += (l.t=='وارد'?l.q:-l.q); });
-            h += <tr><td>${i.c}</td><td>${i.n}</td><td>${b}</td></tr>;
+    function renderAdminTools() {
+        var h = '<h3>تعديل الأصناف</h3><table>';
+        db.items.forEach((i, idx) => {
+            h += <tr><td>${i.n}</td><td><button onclick="db.items.splice(${idx},1);save();renderAdminTools();" style="color:red">حذف</button></td></tr>;
         });
-        document.getElementById('inv_table').innerHTML = h + '</table>';
+        document.getElementById('adminDisplay').innerHTML = h + '</table>';
     }
 
-    function renderAdminLogs() {
-        var h = '<table><tr><th>إذن</th><th>النوع</th><th>الصنف</th><th>حذف</th></tr>';
-        db.logs.forEach(function(l){
-            h += <tr><td>${l.doc}</td><td>${l.t}</td><td>${l.c}</td><td><button onclick="delLog(${l.id})" style="color:red">X</button></td></tr>;
-        });
-        document.getElementById('logs_view').innerHTML = h + '</table>';
+    function save() { localStorage.setItem('SHARIF_DB_V19', JSON.stringify(db)); }
+    function exportExcel() {
+        var ws = XLSX.utils.json_to_sheet(db.logs);
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Logs");
+        XLSX.writeFile(wb, "Sharif_Report.xlsx");
     }
-
-    function delLog(id) {
-        if(confirm("حذف العملية؟")) { db.logs = db.logs.filter(x => x.id !== id); saveDB(); renderAdminLogs(); }
-    }
-
-    function addStaff() {
-        var u = document.getElementById('staff_u').value, p = document.getElementById('staff_p').value;
-        if(u && p) { db.staff.push({u:u, p:p}); saveDB(); alert("تم الحفظ"); }
+</script>
+</body>
+</html>
