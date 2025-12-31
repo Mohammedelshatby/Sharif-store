@@ -2,80 +2,118 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>نظام الشريف الجندي - نسخة الطوارئ</title>
+    <title>نظام الشريف الجندي - الإدارة المتكاملة</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { background: #000; color: #d4af37; font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; }
-        .box { border: 2px solid #d4af37; padding: 20px; margin-bottom: 20px; background: #111; border-radius: 10px; }
+        body { background: #000; color: #d4af37; font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 10px; }
+        .box { border: 2px solid #d4af37; padding: 15px; margin-bottom: 15px; background: #111; border-radius: 10px; }
         .btn-gold { 
-            background: #d4af37; color: #000; padding: 15px 25px; 
+            background: #d4af37; color: #000; padding: 12px; 
             border: none; border-radius: 5px; font-weight: bold; 
-            font-size: 18px; cursor: pointer; margin: 10px; display: inline-block;
-            width: 80%; max-width: 300px;
+            font-size: 16px; cursor: pointer; margin: 5px; width: 45%; max-width: 200px;
         }
-        .modal { display:none; position:fixed; top:5%; left:5%; width:90%; height:90%; background:#1a1a1a; border:3px solid #d4af37; z-index:99999; padding:20px; overflow-y:auto; border-radius: 15px; }
-        input, select { width: 90%; padding: 12px; margin: 10px 0; background: #000; color: #fff; border: 1px solid #d4af37; border-radius: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; color: #fff; }
-        th, td { border: 1px solid #d4af37; padding: 10px; text-align: center; }
+        .modal { display:none; position:fixed; top:2%; left:2%; width:96%; height:96%; background:#1a1a1a; border:3px solid #d4af37; z-index:99999; padding:15px; overflow-y:auto; border-radius: 15px; box-sizing: border-box; }
+        input, select { width: 90%; padding: 10px; margin: 8px 0; background: #000; color: #fff; border: 1px solid #d4af37; border-radius: 5px; font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; color: #fff; font-size: 14px; }
+        th, td { border: 1px solid #d4af37; padding: 8px; text-align: center; }
+        .print-only { display: none; }
+        @media print { body * { visibility: hidden; } .print-area, .print-area * { visibility: visible; } .print-area { position: absolute; left: 0; top: 0; width: 100%; } }
     </style>
 </head>
 <body>
 
 <div class="box">
     <h1 id="title">مؤسسة الشريف الجندي</h1>
-    <p>لو الأزرار مش شغالة، تأكد إنك مش فاتح الصفحة من جوه "معاينة" GitHub، افتح الرابط المباشر.</p>
+    <p id="userDisplay">المستخدم الحالي: زائر</p>
 </div>
 
 <div class="box">
     <button class="btn-gold" onclick="document.getElementById('m_it').style.display='block'">📦 تكويد صنف</button>
-    <button class="btn-gold" onclick="document.getElementById('m_in').style.display='block'; loadItems('sel_in')">📥 إذن إضافة</button>
-    <button class="btn-gold" onclick="document.getElementById('m_out').style.display='block'; loadItems('sel_out')">📤 إذن صرف</button>
+    <button class="btn-gold" onclick="openAction('وارد')">📥 إذن إضافة</button>
+    <button class="btn-gold" onclick="openAction('صرف')">📤 إذن صرف</button>
     <button class="btn-gold" onclick="showInventory()">📊 جرد المخزن</button>
-    <button class="btn-gold" style="background:#555; color:#fff;" onclick="checkAdmin()">🔐 لوحة المدير (2525)</button>
+    <button class="btn-gold" style="background:#555; color:#fff;" onclick="checkAdmin()">🔐 لوحة المدير</button>
 </div>
 
-<div id="admin_panel" class="box" style="display:none; border-style: dashed;">
-    <h2>⚙ تحكم المدير</h2>
-    <input type="text" id="new_name" placeholder="اسم المنشأة الجديد">
-    <button class="btn-gold" onclick="updateTitle()">تحديث الاسم</button>
+<div id="admin_panel" class="modal">
+    <h2 style="color:var(--gold)">⚙ لوحة التحكم الكاملة</h2>
+    <div class="box">
+        <h3>إضافة موظف جديد</h3>
+        <input type="text" id="staff_u" placeholder="اسم الموظف">
+        <input type="password" id="staff_p" placeholder="كلمة المرور">
+        <button class="btn-gold" onclick="addStaff()">حفظ الموظف</button>
+    </div>
+    <div class="box">
+        <h3>إعدادات المنشأة</h3>
+        <input type="text" id="new_name" placeholder="اسم المنشأة الجديد">
+        <button class="btn-gold" onclick="updateTitle()">تحديث الاسم</button>
+    </div>
+    <h3>سجل العمليات العام</h3>
+    <button class="btn-gold" onclick="exportToExcel()">📊 تصدير الكل لإكسيل</button>
     <div id="logs_view"></div>
+    <button class="btn-gold" style="background:red" onclick="this.parentElement.style.display='none'">إغلاق</button>
 </div>
 
 <div id="m_it" class="modal">
-    <h2>تكويد صنف</h2>
+    <h2>📦 تكويد صنف جديد</h2>
     <input type="text" id="it_n" placeholder="اسم الصنف">
     <input type="text" id="it_c" placeholder="كود الصنف">
     <button class="btn-gold" onclick="saveItem()">حفظ</button>
     <button class="btn-gold" style="background:red" onclick="this.parentElement.style.display='none'">إغلاق</button>
 </div>
 
-<div id="m_in" class="modal">
-    <h2>إذن إضافة</h2>
-    <select id="sel_in"></select>
-    <input type="number" id="qty_in" placeholder="الكمية">
-    <input type="text" id="cl_in" placeholder="اسم المورد">
-    <button class="btn-gold" onclick="saveLog('وارد')">تأكيد</button>
-    <button class="btn-gold" style="background:red" onclick="this.parentElement.style.display='none'">إغلاق</button>
-</div>
-
-<div id="m_out" class="modal">
-    <h2>إذن صرف</h2>
-    <select id="sel_out"></select>
-    <input type="number" id="qty_out" placeholder="الكمية">
-    <input type="text" id="cl_out" placeholder="اسم العميل">
-    <button class="btn-gold" onclick="saveLog('صرف')">تأكيد</button>
+<div id="m_act" class="modal">
+    <h2 id="act_title">حركة</h2>
+    <input type="text" id="doc_no" placeholder="رقم الإذن يدوي">
+    <select id="sel_act"></select>
+    <input type="number" id="qty_act" placeholder="الكمية">
+    <input type="text" id="cl_act" placeholder="الجهة (مورد/عميل)">
+    <button class="btn-gold" onclick="saveLog()">تأكيد العملية</button>
     <button class="btn-gold" style="background:red" onclick="this.parentElement.style.display='none'">إغلاق</button>
 </div>
 
 <div id="m_inv" class="modal">
-    <h2>نتائج الجرد</h2>
-    <div id="inv_table"></div>
+    <h2>📊 جرد المخازن والبحث</h2>
+    <input type="text" id="search_it" placeholder="بحث بكود الصنف..." onkeyup="filterInv()">
+    <button class="btn-gold" onclick="printDiv('inv_area')">🖨 طباعة الجرد</button>
+    <div id="inv_area" class="print-area">
+        <div id="inv_table"></div>
+    </div>
     <button class="btn-gold" style="background:red" onclick="this.parentElement.style.display='none'">إغلاق</button>
 </div>
 
 <script>
-    // قاعدة البيانات
-    var db = JSON.parse(localStorage.getItem('SHARIF_V16')) || { name: "مؤسسة الشريف الجندي", items: [], logs: [] };
+    var db = JSON.parse(localStorage.getItem('SHARIF_V17')) || { 
+        name: "مؤسسة الشريف الجندي", 
+        items: [], 
+        logs: [], 
+        staff: [{u: "admin", p: "2525"}] 
+    };
+    var current_user = "admin";
+    var active_type = "";
+
     document.getElementById('title').innerText = db.name;
+
+    function checkAdmin() {
+        var u = prompt("اسم المستخدم:");
+        var p = prompt("كلمة المرور:");
+        var found = db.staff.find(x => x.u === u && x.p === p);
+        if(found) {
+            current_user = u;
+            document.getElementById('userDisplay').innerText = "المستخدم: " + u;
+            document.getElementById('admin_panel').style.display='block';
+            renderAdminLogs();
+        } else { alert("بيانات خاطئة!"); }
+    }
+
+    function addStaff() {
+        var u = document.getElementById('staff_u').value;
+        var p = document.getElementById('staff_p').value;
+        if(u && p) {
+            db.staff.push({u:u, p:p});
+            saveDB(); alert("تم إضافة الموظف");
+        }
+    }
 
     function saveItem() {
         var n = document.getElementById('it_n').value, c = document.getElementById('it_c').value;
@@ -86,53 +124,58 @@
         }
     }
 
-    function loadItems(sid) {
-        var s = document.getElementById(sid);
-        s.innerHTML = db.items.map(function(i){ return '<option value="'+i.c+'">'+i.n+'</option>' }).join('');
+    function openAction(type) {
+        active_type = type;
+        document.getElementById('act_title').innerText = "إذن " + type;
+        var s = document.getElementById('sel_act');
+        s.innerHTML = db.items.map(i => '<option value="'+i.c+'">'+i.n+' ['+i.c+']</option>').join('');
+        document.getElementById('m_act').style.display='block';
     }
 
-    function saveLog(type) {
-        var c = (type=='وارد'? document.getElementById('sel_in').value : document.getElementById('sel_out').value);
-        var q = (type=='وارد'? document.getElementById('qty_in').value : document.getElementById('qty_out').value);
-        var cl = (type=='وارد'? document.getElementById('cl_in').value : document.getElementById('cl_out').value);
-        if(c && q) {
-            db.logs.push({id:Date.now(), c:c, q:parseFloat(q), t:type, cl:cl, d:new Date().toLocaleString()});
-            saveDB(); alert("تم الحفظ");
-            document.getElementById('m_in').style.display='none';
-            document.getElementById('m_out').style.display='none';
-        }
+    function saveLog() {
+        var d = document.getElementById('doc_no').value;
+        var c = document.getElementById('sel_act').value;
+        var q = document.getElementById('qty_act').value;
+        var cl = document.getElementById('cl_act').value;
+        if(d && c && q) {
+            db.logs.push({id:Date.now(), doc:d, c:c, q:parseFloat(q), t:active_type, cl:cl, u:current_user, dt:new Date().toLocaleString()});
+            saveDB(); alert("تم الحفظ بنجاح");
+            document.getElementById('m_act').style.display='none';
+        } else { alert("يرجى إدخال رقم الإذن والكمية"); }
     }
 
     function showInventory() {
-        var h = '<table><tr><th>الصنف</th><th>الرصيد</th></tr>';
-        db.items.forEach(function(i){
-            var b = 0;
-            db.logs.forEach(function(l){ if(l.c==i.c) b += (l.t=='وارد'?l.q:-l.q); });
-            h += '<tr><td>'+i.n+'</td><td>'+b+'</td></tr>';
-        });
-        document.getElementById('inv_table').innerHTML = h + '</table>';
+        renderInvTable(db.items);
         document.getElementById('m_inv').style.display='block';
     }
 
-    function checkAdmin() {
-        var p = prompt("الباسورد؟");
-        if(p=="2525") {
-            document.getElementById('admin_panel').style.display='block';
-            renderAdminLogs();
-        }
+    function renderInvTable(itemsList) {
+        var h = '<table><tr><th>الكود</th><th>الصنف</th><th>الرصيد</th></tr>';
+        itemsList.forEach(function(i){
+            var b = 0;
+            db.logs.forEach(function(l){ if(l.c==i.c) b += (l.t=='وارد'?l.q:-l.q); });
+            h += '<tr><td>'+i.c+'</td><td>'+i.n+'</td><td>'+b+'</td></tr>';
+        });
+        document.getElementById('inv_table').innerHTML = h + '</table>';
+    }
+
+    function filterInv() {
+        var val = document.getElementById('search_it').value.toLowerCase();
+        var filtered = db.items.filter(i => i.c.toLowerCase().includes(val) || i.n.toLowerCase().includes(val));
+        renderInvTable(filtered);
     }
 
     function renderAdminLogs() {
-        var h = '<table><tr><th>التاريخ</th><th>النوع</th><th>حذف</th></tr>';
+        var h = '<table><tr><th>إذن</th><th>التاريخ</th><th>النوع</th><th>الصنف</th><th>الكمية</th><th>حذف</th></tr>';
         db.logs.forEach(function(l){
-            h += '<tr><td>'+l.d+'</td><td>'+l.t+'</td><td><button onclick="delLog('+l.id+')" style="color:red">X</button></td></tr>';
+            var it = db.items.find(x => x.c == l.c);
+            h += '<tr><td>'+l.doc+'</td><td>'+l.dt+'</td><td>'+l.t+'</td><td>'+(it?it.n:l.c)+'</td><td>'+l.q+'</td><td><button onclick="delLog('+l.id+')" style="color:red">X</button></td></tr>';
         });
         document.getElementById('logs_view').innerHTML = h + '</table>';
     }
 
     function delLog(id) {
-        db.logs = db.logs.filter(function(x){ return x.id !== id });
-        saveDB(); renderAdminLogs();
+        if(confirm("حذف العملية؟")) { db.logs = db.logs.filter(x => x.id !== id); saveDB(); renderAdminLogs(); }
     }
 
     function updateTitle() {
@@ -140,7 +183,18 @@
         if(v) { db.name = v; document.getElementById('title').innerText = v; saveDB(); }
     }
 
-    function saveDB() { localStorage.setItem('SHARIF_V16', JSON.stringify(db)); }
+    function saveDB() { localStorage.setItem('SHARIF_V17', JSON.stringify(db)); }
+
+    function printDiv(id) {
+        window.print();
+    }
+
+    function exportToExcel() {
+        var ws = XLSX.utils.json_to_sheet(db.logs);
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Logs");
+        XLSX.writeFile(wb, "Sharif_Inventory_Report.xlsx");
+    }
 </script>
 
 </body>
