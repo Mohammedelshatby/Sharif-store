@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>نظام الشريف الجندي - الإدارة المتكاملة</title>
+    <title>نظام الشريف الجندي - التحكم الكامل V18</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { background: #000; color: #d4af37; font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 10px; }
@@ -16,15 +16,17 @@
         input, select { width: 90%; padding: 10px; margin: 8px 0; background: #000; color: #fff; border: 1px solid #d4af37; border-radius: 5px; font-size: 16px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; color: #fff; font-size: 14px; }
         th, td { border: 1px solid #d4af37; padding: 8px; text-align: center; }
-        .print-only { display: none; }
-        @media print { body * { visibility: hidden; } .print-area, .print-area * { visibility: visible; } .print-area { position: absolute; left: 0; top: 0; width: 100%; } }
+        .admin-badge { background: red; color: white; padding: 5px 10px; border-radius: 5px; display: none; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="box">
     <h1 id="title">مؤسسة الشريف الجندي</h1>
-    <p id="userDisplay">المستخدم الحالي: زائر</p>
+    <div id="adminBadge" class="admin-badge">وضع المدير - صلاحيات كاملة</div>
+    <p id="userDisplay">المستخدم الحالي: موظف</p>
+    <button id="switchBtn" class="btn-gold" style="background:#555; color:white; width:150px" onclick="loginSystem()">🔑 دخول المدير</button>
+    <button id="logoutBtn" class="btn-gold" style="background:red; color:white; width:150px; display:none;" onclick="logout()">🚪 تبديل لموظف</button>
 </div>
 
 <div class="box">
@@ -32,11 +34,15 @@
     <button class="btn-gold" onclick="openAction('وارد')">📥 إذن إضافة</button>
     <button class="btn-gold" onclick="openAction('صرف')">📤 إذن صرف</button>
     <button class="btn-gold" onclick="showInventory()">📊 جرد المخزن</button>
-    <button class="btn-gold" style="background:#555; color:#fff;" onclick="checkAdmin()">🔐 لوحة المدير</button>
+    <button id="masterBtn" class="btn-gold" style="display:none; background:white; color:black;" onclick="document.getElementById('admin_panel').style.display='block'; renderAdminLogs(); renderItemsControl();">⚙ لوحة التحكم</button>
 </div>
 
 <div id="admin_panel" class="modal">
-    <h2 style="color:var(--gold)">⚙ لوحة التحكم الكاملة</h2>
+    <h2 style="color:#d4af37">⚙ لوحة تحكم المدير</h2>
+    <div class="box">
+        <h3>تعديل/حذف الأصناف</h3>
+        <div id="items_control_view"></div>
+    </div>
     <div class="box">
         <h3>إضافة موظف جديد</h3>
         <input type="text" id="staff_u" placeholder="اسم الموظف">
@@ -44,13 +50,10 @@
         <button class="btn-gold" onclick="addStaff()">حفظ الموظف</button>
     </div>
     <div class="box">
-        <h3>إعدادات المنشأة</h3>
-        <input type="text" id="new_name" placeholder="اسم المنشأة الجديد">
-        <button class="btn-gold" onclick="updateTitle()">تحديث الاسم</button>
+        <h3>سجل العمليات العام</h3>
+        <button class="btn-gold" onclick="exportToExcel()">📊 تصدير لإكسيل</button>
+        <div id="logs_view"></div>
     </div>
-    <h3>سجل العمليات العام</h3>
-    <button class="btn-gold" onclick="exportToExcel()">📊 تصدير الكل لإكسيل</button>
-    <div id="logs_view"></div>
     <button class="btn-gold" style="background:red" onclick="this.parentElement.style.display='none'">إغلاق</button>
 </div>
 
@@ -62,56 +65,105 @@
     <button class="btn-gold" style="background:red" onclick="this.parentElement.style.display='none'">إغلاق</button>
 </div>
 
+<div id="m_edit_it" class="modal">
+    <h2>✏ تعديل صنف</h2>
+    <input type="hidden" id="edit_old_c">
+    <input type="text" id="edit_it_n" placeholder="اسم الصنف الجديد">
+    <input type="text" id="edit_it_c" placeholder="كود الصنف الجديد">
+    <button class="btn-gold" onclick="updateItem()">تحديث</button>
+    <button class="btn-gold" style="background:red" onclick="this.parentElement.style.display='none'">إلغاء</button>
+</div>
+
 <div id="m_act" class="modal">
     <h2 id="act_title">حركة</h2>
     <input type="text" id="doc_no" placeholder="رقم الإذن يدوي">
     <select id="sel_act"></select>
     <input type="number" id="qty_act" placeholder="الكمية">
-    <input type="text" id="cl_act" placeholder="الجهة (مورد/عميل)">
+    <input type="text" id="cl_act" placeholder="الجهة">
     <button class="btn-gold" onclick="saveLog()">تأكيد العملية</button>
     <button class="btn-gold" style="background:red" onclick="this.parentElement.style.display='none'">إغلاق</button>
 </div>
 
 <div id="m_inv" class="modal">
-    <h2>📊 جرد المخازن والبحث</h2>
-    <input type="text" id="search_it" placeholder="بحث بكود الصنف..." onkeyup="filterInv()">
-    <button class="btn-gold" onclick="printDiv('inv_area')">🖨 طباعة الجرد</button>
-    <div id="inv_area" class="print-area">
-        <div id="inv_table"></div>
-    </div>
+    <h2>📊 الجرد</h2>
+    <input type="text" id="search_it" placeholder="بحث بكود أو اسم..." onkeyup="filterInv()">
+    <div id="inv_table"></div>
     <button class="btn-gold" style="background:red" onclick="this.parentElement.style.display='none'">إغلاق</button>
 </div>
 
 <script>
-    var db = JSON.parse(localStorage.getItem('SHARIF_V17')) || { 
+    var db = JSON.parse(localStorage.getItem('SHARIF_V18')) || { 
         name: "مؤسسة الشريف الجندي", 
         items: [], 
         logs: [], 
         staff: [{u: "admin", p: "2525"}] 
     };
-    var current_user = "admin";
-    var active_type = "";
+    var current_user = "موظف";
+    var is_admin = false;
 
-    document.getElementById('title').innerText = db.name;
-
-    function checkAdmin() {
+    function loginSystem() {
         var u = prompt("اسم المستخدم:");
         var p = prompt("كلمة المرور:");
         var found = db.staff.find(x => x.u === u && x.p === p);
         if(found) {
             current_user = u;
+            is_admin = true;
             document.getElementById('userDisplay').innerText = "المستخدم: " + u;
-            document.getElementById('admin_panel').style.display='block';
-            renderAdminLogs();
+            document.getElementById('adminBadge').style.display = 'block';
+            document.getElementById('masterBtn').style.display = 'inline-block';
+            document.getElementById('logoutBtn').style.display = 'inline-block';
+            document.getElementById('switchBtn').style.display = 'none';
+            alert("تم الدخول بصلاحيات المدير");
         } else { alert("بيانات خاطئة!"); }
     }
 
-    function addStaff() {
-        var u = document.getElementById('staff_u').value;
-        var p = document.getElementById('staff_p').value;
-        if(u && p) {
-            db.staff.push({u:u, p:p});
-            saveDB(); alert("تم إضافة الموظف");
+    function logout() {
+        is_admin = false;
+        current_user = "موظف";
+        document.getElementById('userDisplay').innerText = "المستخدم: موظف";
+        document.getElementById('adminBadge').style.display = 'none';
+        document.getElementById('masterBtn').style.display = 'none';
+        document.getElementById('logoutBtn').style.display = 'none';
+        document.getElementById('switchBtn').style.display = 'inline-block';
+    }
+
+    function renderItemsControl() {
+        var h = '<table><tr><th>الكود</th><th>الصنف</th><th>تعديل</th><th>حذف</th></tr>';
+        db.items.forEach(function(i){
+            h += `<tr><td>${i.c}</td><td>${i.n}</td>
+            <td><button onclick="editItemForm('${i.c}','${i.n}')" style="background:orange; border:none; padding:5px; cursor:pointer">✏</button></td>
+            <td><button onclick="deleteItem('${i.c}')" style="background:red; color:white; border:none; padding:5px; cursor:pointer">🗑</button></td></tr>`;
+        });
+        document.getElementById('items_control_view').innerHTML = h + '</table>';
+    }
+
+    function editItemForm(oldC, oldN) {
+        document.getElementById('edit_old_c').value = oldC;
+        document.getElementById('edit_it_n').value = oldN;
+        document.getElementById('edit_it_c').value = oldC;
+        document.getElementById('m_edit_it').style.display = 'block';
+    }
+
+    function updateItem() {
+        var oldC = document.getElementById('edit_old_c').value;
+        var newN = document.getElementById('edit_it_n').value;
+        var newC = document.getElementById('edit_it_c').value;
+        
+        var it = db.items.find(x => x.c === oldC);
+        if(it) {
+            it.n = newN; it.c = newC;
+            db.logs.forEach(l => { if(l.c === oldC) l.c = newC; });
+            saveDB(); renderItemsControl();
+            document.getElementById('m_edit_it').style.display = 'none';
+            alert("تم تحديث الصنف وسجلاته");
+        }
+    }
+
+    function deleteItem(code) {
+        if(confirm("هل تريد حذف الصنف تماماً؟ سيتم حذف جميع سجلاته أيضاً!")) {
+            db.items = db.items.filter(x => x.c !== code);
+            db.logs = db.logs.filter(x => x.c !== code);
+            saveDB(); renderItemsControl();
         }
     }
 
@@ -125,11 +177,11 @@
     }
 
     function openAction(type) {
-        active_type = type;
         document.getElementById('act_title').innerText = "إذن " + type;
         var s = document.getElementById('sel_act');
-        s.innerHTML = db.items.map(i => '<option value="'+i.c+'">'+i.n+' ['+i.c+']</option>').join('');
+        s.innerHTML = db.items.map(i => <option value="${i.c}">${i.n}</option>).join('');
         document.getElementById('m_act').style.display='block';
+        window.currentActionType = type;
     }
 
     function saveLog() {
@@ -138,10 +190,10 @@
         var q = document.getElementById('qty_act').value;
         var cl = document.getElementById('cl_act').value;
         if(d && c && q) {
-            db.logs.push({id:Date.now(), doc:d, c:c, q:parseFloat(q), t:active_type, cl:cl, u:current_user, dt:new Date().toLocaleString()});
-            saveDB(); alert("تم الحفظ بنجاح");
+            db.logs.push({id:Date.now(), doc:d, c:c, q:parseFloat(q), t:window.currentActionType, cl:cl, u:current_user, dt:new Date().toLocaleString()});
+            saveDB(); alert("تم الحفظ");
             document.getElementById('m_act').style.display='none';
-        } else { alert("يرجى إدخال رقم الإذن والكمية"); }
+        }
     }
 
     function showInventory() {
@@ -154,22 +206,15 @@
         itemsList.forEach(function(i){
             var b = 0;
             db.logs.forEach(function(l){ if(l.c==i.c) b += (l.t=='وارد'?l.q:-l.q); });
-            h += '<tr><td>'+i.c+'</td><td>'+i.n+'</td><td>'+b+'</td></tr>';
+            h += <tr><td>${i.c}</td><td>${i.n}</td><td>${b}</td></tr>;
         });
         document.getElementById('inv_table').innerHTML = h + '</table>';
     }
 
-    function filterInv() {
-        var val = document.getElementById('search_it').value.toLowerCase();
-        var filtered = db.items.filter(i => i.c.toLowerCase().includes(val) || i.n.toLowerCase().includes(val));
-        renderInvTable(filtered);
-    }
-
     function renderAdminLogs() {
-        var h = '<table><tr><th>إذن</th><th>التاريخ</th><th>النوع</th><th>الصنف</th><th>الكمية</th><th>حذف</th></tr>';
+        var h = '<table><tr><th>إذن</th><th>النوع</th><th>الصنف</th><th>حذف</th></tr>';
         db.logs.forEach(function(l){
-            var it = db.items.find(x => x.c == l.c);
-            h += '<tr><td>'+l.doc+'</td><td>'+l.dt+'</td><td>'+l.t+'</td><td>'+(it?it.n:l.c)+'</td><td>'+l.q+'</td><td><button onclick="delLog('+l.id+')" style="color:red">X</button></td></tr>';
+            h += <tr><td>${l.doc}</td><td>${l.t}</td><td>${l.c}</td><td><button onclick="delLog(${l.id})" style="color:red">X</button></td></tr>;
         });
         document.getElementById('logs_view').innerHTML = h + '</table>';
     }
@@ -178,24 +223,6 @@
         if(confirm("حذف العملية؟")) { db.logs = db.logs.filter(x => x.id !== id); saveDB(); renderAdminLogs(); }
     }
 
-    function updateTitle() {
-        var v = document.getElementById('new_name').value;
-        if(v) { db.name = v; document.getElementById('title').innerText = v; saveDB(); }
-    }
-
-    function saveDB() { localStorage.setItem('SHARIF_V17', JSON.stringify(db)); }
-
-    function printDiv(id) {
-        window.print();
-    }
-
-    function exportToExcel() {
-        var ws = XLSX.utils.json_to_sheet(db.logs);
-        var wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Logs");
-        XLSX.writeFile(wb, "Sharif_Inventory_Report.xlsx");
-    }
-</script>
-
-</body>
-</html>
+    function addStaff() {
+        var u = document.getElementById('staff_u').value, p = document.getElementById('staff_p').value;
+        if(u && p) { db.staff.push({u:u, p:p}); saveDB(); alert("تم الحفظ"); }
