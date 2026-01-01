@@ -2,208 +2,156 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الشريف الجندي V21 - المتكامل</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>مؤسسة الشريف الجندي V22</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --gold: #D4AF37; --dark: #1a1a1a; --text: #ffffff; }
-        body { background-color: var(--dark); color: var(--text); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 10px; }
-        .container { max-width: 900px; margin: auto; }
-        header { text-align: center; border-bottom: 2px solid var(--gold); padding: 10px; margin-bottom: 20px; }
-        h1 { color: var(--gold); margin: 0; font-size: 24px; }
-        .auth-bar { background: #333; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; border: 1px solid var(--gold); }
-        .btn { background: var(--gold); color: black; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin: 5px; transition: 0.3s; }
-        .btn:hover { background: #fff; }
-        .btn-danger { background: #ff4d4d; color: white; }
-        .section { display: none; background: #262626; padding: 15px; border-radius: 10px; border: 1px solid #444; margin-bottom: 20px; }
-        .active { display: block; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: 1px solid #555; background: #333; color: white; box-sizing: border-box; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
-        th, td { border: 1px solid #444; padding: 10px; text-align: center; }
-        th { background: var(--gold); color: black; }
-        .manager-only { border: 2px solid #ff4d4d; background: #2d1a1a; padding: 10px; border-radius: 8px; margin-top: 10px; }
+        body { background: #000; color: #d4af37; font-family: 'Arial', sans-serif; text-align: center; margin: 0; padding: 10px; }
+        .box { border: 2px solid #d4af37; padding: 15px; background: #0a0a0a; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 0 15px rgba(212,175,55,0.1); }
+        h1 { margin: 0; font-size: 26px; }
+        .status-bar { background: #1a1a1a; padding: 10px; border-radius: 8px; margin: 10px 0; border: 1px solid #333; }
+        
+        /* تصميم الأزرار ليكون سهل الضغط ومستجيب فوراً */
+        .btn { 
+            background: #d4af37; color: #000; padding: 20px 10px; 
+            border: 2px solid #fff; border-radius: 12px; font-weight: bold; 
+            font-size: 18px; cursor: pointer; margin: 8px 1%; width: 46%;
+            display: inline-block; vertical-align: top; -webkit-tap-highlight-color: transparent;
+        }
+        .btn:active { background: #fff; transform: translateY(2px); }
+        
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.98); z-index:99999; padding-top: 20px; overflow-y:auto; }
+        .modal-inner { background: #111; border: 2px solid #d4af37; margin: 10px; padding: 20px; border-radius: 15px; }
+        
+        input, select { width: 100%; padding: 15px; margin: 10px 0; background: #222; color: #fff; border: 1px solid #d4af37; font-size: 18px; border-radius: 8px; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; color: #fff; margin-top: 15px; }
+        th, td { border: 1px solid #444; padding: 12px; text-align: center; }
+        th { background: #d4af37; color: #000; }
+        
+        .admin-section { display: none; border: 2px dashed red; padding: 15px; margin-top: 15px; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <h1>نظام الشريف الجندي المتكامل V21</h1>
-        <p id="user-status">المستخدم الحالي: <span style="color:var(--gold)">موظف (عرض وإدخال)</span></p>
-    </header>
-
-    <div class="auth-bar">
-        <button class="btn" onclick="showSection('section-add')">إضافة حركة (وارد/صادر)</button>
-        <button class="btn" onclick="showSection('section-inventory')">الجرد والبحث</button>
-        <button class="btn" onclick="openManagerMode()">لوحة المدير (سري)</button>
-        <button class="btn" onclick="location.reload()">إعادة تنشيط النظام</button>
+<div class="box">
+    <h1>مؤسسة الشريف الجندي</h1>
+    <div class="status-bar">
+        <span id="stUser">👤 الوضع: موظف</span> | 
+        <button onclick="var p=prompt('كلمة سر المدير:'); if(p=='2525'){ isMgr=true; document.getElementById('mgrZone').style.display='block'; document.getElementById('stUser').innerHTML='👑 الوضع: مدير'; alert('تم التفعيل'); }else{alert('خطأ');}" style="background:none; border:1px solid #d4af37; color:#d4af37; cursor:pointer; border-radius:4px; padding:2px 10px;">دخول المدير</button>
     </div>
+    <button class="btn" style="background:#900; color:#fff; width:100px; padding:10px; font-size:14px;" onclick="location.reload()">🔄 تحديث</button>
+</div>
 
-    <div id="section-add" class="section active">
-        <h3>تسجيل حركة مخزنية</h3>
-        <select id="move-type">
-            <option value="وارد">إذن إضافة (وارد من مورد)</option>
-            <option value="صادر">إذن صرف (صادر لعميل)</option>
-        </select>
-        <input type="text" id="item-name" placeholder="اسم الصنف أو الكود">
-        <input type="number" id="item-qty" placeholder="الكمية">
-        <input type="text" id="person-name" placeholder="اسم (المورد / العميل)">
-        <input type="text" id="manual-ref" placeholder="رقم الإذن اليدوي (اختياري)">
-        <button class="btn" style="width:100%" onclick="saveMovement()">تأكيد وحفظ العملية</button>
+<div class="box">
+    <button class="btn" onclick="document.getElementById('popItem').style.display='block'">📦 صنف جديد</button>
+    <button class="btn" onclick="document.getElementById('popEnt').style.display='block'">👥 عميل/مورد</button>
+    <button class="btn" onclick="mType='وارد'; document.getElementById('popMove').style.display='block'; document.getElementById('moveH').innerText='إذن إضافة (وارد)'; loadLists();">📥 إذن إضافة</button>
+    <button class="btn" onclick="mType='صرف'; document.getElementById('popMove').style.display='block'; document.getElementById('moveH').innerText='إذن صرف (صادر)'; loadLists();">📤 إذن صرف</button>
+    <button class="btn" style="width:95%" onclick="renderInv(); document.getElementById('popInv').style.display='block'">📊 جرد المخزن والبحث</button>
+</div>
+
+<div id="mgrZone" class="admin-section">
+    <h2 style="color:red">⚙ صلاحيات المدير</h2>
+    <button class="btn" style="width:95%; background:#fff;" onclick="exportExcel()">📥 تحميل سجل العمليات (Excel)</button>
+    <button class="btn" style="width:95%; background:orange;" onclick="showAdminEdit()">✏ تعديل وحذف الأصناف</button>
+    <div id="mgrDisplay"></div>
+</div>
+
+<div id="popItem" class="modal">
+    <div class="modal-inner">
+        <h2>تكويد صنف جديد</h2>
+        <input type="text" id="itN" placeholder="اسم الصنف">
+        <input type="text" id="itC" placeholder="كود الصنف">
+        <button class="btn" style="width:100%" onclick="saveIt()">حفظ البيانات</button>
+        <button class="btn" style="width:100%; background:#555; color:#fff;" onclick="this.parentElement.parentElement.style.display='none'">إلغاء</button>
     </div>
+</div>
 
-    <div id="section-inventory" class="section">
-        <h3>جرد المخزن الفوري</h3>
-        <input type="text" id="search-box" onkeyup="searchInventory()" placeholder="ابحث بالكود أو اسم الصنف هنا...">
-        <table id="inventory-table">
-            <thead>
-                <tr>
-                    <th>الصنف</th>
-                    <th>إجمالي الوارد</th>
-                    <th>إجمالي الصادر</th>
-                    <th>الرصيد الحالي</th>
-                </tr>
-            </thead>
-            <tbody id="inventory-body">
-                </tbody>
-        </table>
+<div id="popEnt" class="modal">
+    <div class="modal-inner">
+        <h2>إضافة عميل أو مورد</h2>
+        <select id="enT"><option value="مورد">مورد</option><option value="عميل">عميل</option></select>
+        <input type="text" id="enN" placeholder="الاسم">
+        <button class="btn" style="width:100%" onclick="saveEn()">حفظ</button>
+        <button class="btn" style="width:100%; background:#555; color:#fff;" onclick="this.parentElement.parentElement.style.display='none'">إلغاء</button>
     </div>
+</div>
 
-    <div id="section-manager" class="section">
-        <h3 style="color:#ff4d4d">لوحة تحكم المدير الحصرية</h3>
-        <div class="manager-only">
-            <button class="btn" onclick="exportToExcel()">تصدير كافة البيانات (Excel)</button>
-            <button class="btn btn-danger" onclick="clearAllData()">تصفير النظام بالكامل</button>
-        </div>
-        <h4>سجل العمليات (للتعديل والحذف)</h4>
-        <table id="log-table">
-            <thead>
-                <tr>
-                    <th>التاريخ</th>
-                    <th>النوع</th>
-                    <th>الصنف</th>
-                    <th>الكمية</th>
-                    <th>الإجراء</th>
-                </tr>
-            </thead>
-            <tbody id="log-body"></tbody>
-        </table>
+<div id="popMove" class="modal">
+    <div class="modal-inner">
+        <h2 id="moveH">حركة</h2>
+        <input type="text" id="moD" placeholder="رقم الإذن اليدوي">
+        <select id="moIt"></select>
+        <input type="number" id="moQ" placeholder="الكمية">
+        <select id="moEn"></select>
+        <button class="btn" style="width:100%" onclick="saveMo()">تأكيد الحركة</button>
+        <button class="btn" style="width:100%; background:#555; color:#fff;" onclick="this.parentElement.parentElement.style.display='none'">إلغاء</button>
+    </div>
+</div>
+
+<div id="popInv" class="modal">
+    <div class="modal-inner">
+        <h2>📊 تقرير الجرد</h2>
+        <input type="text" placeholder="بحث باسم الصنف..." onkeyup="searchInv(this.value)">
+        <div id="invTableBox"></div>
+        <button class="btn" style="width:100%; background:red; color:#fff;" onclick="this.parentElement.parentElement.style.display='none'">إغلاق</button>
     </div>
 </div>
 
 <script>
-    let movements = JSON.parse(localStorage.getItem('shereef_v21_data')) || [];
-    let isManager = false;
+    var mType = ""; var isMgr = false;
+    var data = JSON.parse(localStorage.getItem('SHARIF_V22')) || { items:[], logs:[], entities:[] };
 
-    function showSection(id) {
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        if(id === 'section-inventory') updateInventory();
-        if(id === 'section-manager' && isManager) updateLog();
+    function saveIt() {
+        var n=document.getElementById('itN').value, c=document.getElementById('itC').value;
+        if(n && c){ data.items.push({n:n, c:c}); sync(); alert('تم الحفظ'); document.getElementById('popItem').style.display='none'; }
     }
 
-    function saveMovement() {
-        const type = document.getElementById('move-type').value;
-        const item = document.getElementById('item-name').value;
-        const qty = parseFloat(document.getElementById('item-qty').value);
-        const person = document.getElementById('person-name').value;
-        
-        if(!item || !qty) return alert("برجاء إكمال البيانات!");
-
-        const entry = {
-            id: Date.now(),
-            date: new Date().toLocaleString('ar-EG'),
-            type, item, qty, person,
-            ref: document.getElementById('manual-ref').value
-        };
-
-        movements.push(entry);
-        localStorage.setItem('shereef_v21_data', JSON.stringify(movements));
-        alert("تم الحفظ بنجاح!");
-        document.getElementById('item-qty').value = "";
+    function saveEn() {
+        var t=document.getElementById('enT').value, n=document.getElementById('enN').value;
+        if(n){ data.entities.push({t:t, n:n}); sync(); alert('تم الحفظ'); document.getElementById('popEnt').style.display='none'; }
     }
 
-    function updateInventory() {
-        const summary = {};
-        movements.forEach(m => {
-            if(!summary[m.item]) summary[m.item] = { in: 0, out: 0 };
-            if(m.type === 'وارد') summary[m.item].in += m.qty;
-            else summary[m.item].out += m.qty;
+    function loadLists() {
+        document.getElementById('moIt').innerHTML = data.items.map(i => <option value="${i.c}">${i.n}</option>).join('');
+        var filtered = data.entities.filter(e => (mType==='وارد' ? e.t==='مورد' : e.t==='عميل'));
+        document.getElementById('moEn').innerHTML = filtered.map(e => <option value="${e.n}">${e.n}</option>).join('');
+    }
+
+    function saveMo() {
+        var d=document.getElementById('moD').value, i=document.getElementById('moIt').value, q=document.getElementById('moQ').value, e=document.getElementById('moEn').value;
+        if(d && i && q){
+            data.logs.push({id:Date.now(), d:d, i:i, q:parseFloat(q), e:e, t:mType, dt:new Date().toLocaleString('ar-EG')});
+            sync(); alert('تم التسجيل'); document.getElementById('popMove').style.display='none';
+        }
+    }
+
+    function renderInv() {
+        var h = '<table><tr><th>الصنف</th><th>الرصيد</th></tr>';
+        data.items.forEach(it => {
+            var b = 0;
+            data.logs.forEach(l => { if(l.i==it.c) b += (l.t=='وارد' ? l.q : -l.q); });
+            h += <tr><td>${it.n}</td><td style="color:${b<0?'red':'lime'}">${b}</td></tr>;
         });
-
-        const body = document.getElementById('inventory-body');
-        body.innerHTML = "";
-        for(let item in summary) {
-            body.innerHTML += `<tr>
-                <td>${item}</td>
-                <td>${summary[item].in}</td>
-                <td>${summary[item].out}</td>
-                <td style="font-weight:bold; color:var(--gold)">${summary[item].in - summary[item].out}</td>
-            </tr>`;
-        }
+        document.getElementById('invTableBox').innerHTML = h + '</table>';
     }
 
-    function openManagerMode() {
-        const pw = prompt("ادخل كلمة سر المدير:");
-        if(pw === "2525") {
-            isManager = true;
-            document.getElementById('user-status').innerHTML = "المستخدم الحالي: <span style='color:#ff4d4d'>المدير (صلاحيات كاملة)</span>";
-            showSection('section-manager');
-        } else {
-            alert("كلمة سر خاطئة!");
-        }
-    }
-
-    function updateLog() {
-        const body = document.getElementById('log-body');
-        body.innerHTML = movements.map(m => `
-            <tr>
-                <td>${m.date}</td>
-                <td>${m.type}</td>
-                <td>${m.item}</td>
-                <td>${m.qty}</td>
-                <td><button onclick="deleteEntry(${m.id})" style="color:red">حذف</button></td>
-            </tr>
-        `).join('');
-    }
-
-    function deleteEntry(id) {
-        if(confirm("هل أنت متأكد من حذف هذه العملية؟")) {
-            movements = movements.filter(m => m.id !== id);
-            localStorage.setItem('shereef_v21_data', JSON.stringify(movements));
-            updateLog();
-        }
-    }
-
-    function clearAllData() {
-        if(confirm("تحذير! سيتم مسح كل البيانات نهائياً. هل أنت متأكد؟")) {
-            localStorage.removeItem('shereef_v21_data');
-            location.reload();
-        }
-    }
-
-    function exportToExcel() {
-        let csv = "التاريخ,النوع,الصنف,الكمية,الجهة,رقم الإذن\n";
-        movements.forEach(m => {
-            csv += ${m.date},${m.type},${m.item},${m.qty},${m.person},${m.ref}\n;
+    function showAdminEdit() {
+        var h = '<h3>تحكم الأصناف</h3><table>';
+        data.items.forEach((it, idx) => {
+            h += <tr><td>${it.n}</td><td><button onclick="data.items.splice(${idx},1);sync();showAdminEdit();" style="color:red">حذف</button></td></tr>;
         });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", "shereef_inventory_report.csv");
-        link.click();
+        document.getElementById('mgrDisplay').innerHTML = h + '</table>';
     }
 
-    function searchInventory() {
-        let filter = document.getElementById('search-box').value.toUpperCase();
-        let rows = document.getElementById('inventory-table').getElementsByTagName('tr');
-        for (let i = 1; i < rows.length; i++) {
-            let td = rows[i].getElementsByTagName('td')[0];
-            if (td) {
-                rows[i].style.display = td.innerText.toUpperCase().indexOf(filter) > -1 ? "" : "none";
-            }
-        }
+    function sync() { localStorage.setItem('SHARIF_V22', JSON.stringify(data)); }
+    
+    function exportExcel() {
+        var ws = XLSX.utils.json_to_sheet(data.logs);
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Logs");
+        XLSX.writeFile(wb, "Sharif_Report.xlsx");
     }
 </script>
-
 </body>
 </html>
