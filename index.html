@@ -2,156 +2,103 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>مؤسسة الشريف الجندي V22</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>مؤسسة الشريف الجندي V23</title>
     <style>
-        body { background: #000; color: #d4af37; font-family: 'Arial', sans-serif; text-align: center; margin: 0; padding: 10px; }
-        .box { border: 2px solid #d4af37; padding: 15px; background: #0a0a0a; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 0 15px rgba(212,175,55,0.1); }
-        h1 { margin: 0; font-size: 26px; }
-        .status-bar { background: #1a1a1a; padding: 10px; border-radius: 8px; margin: 10px 0; border: 1px solid #333; }
-        
-        /* تصميم الأزرار ليكون سهل الضغط ومستجيب فوراً */
+        body { background: #000; color: #d4af37; font-family: sans-serif; text-align: center; padding: 20px; }
         .btn { 
-            background: #d4af37; color: #000; padding: 20px 10px; 
-            border: 2px solid #fff; border-radius: 12px; font-weight: bold; 
-            font-size: 18px; cursor: pointer; margin: 8px 1%; width: 46%;
-            display: inline-block; vertical-align: top; -webkit-tap-highlight-color: transparent;
+            background: #d4af37; color: #000; padding: 25px; 
+            border: 4px solid #fff; border-radius: 15px; font-weight: bold; 
+            font-size: 22px; cursor: pointer; margin: 10px; width: 90%;
+            display: block;
         }
-        .btn:active { background: #fff; transform: translateY(2px); }
-        
-        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.98); z-index:99999; padding-top: 20px; overflow-y:auto; }
-        .modal-inner { background: #111; border: 2px solid #d4af37; margin: 10px; padding: 20px; border-radius: 15px; }
-        
-        input, select { width: 100%; padding: 15px; margin: 10px 0; background: #222; color: #fff; border: 1px solid #d4af37; font-size: 18px; border-radius: 8px; box-sizing: border-box; }
-        table { width: 100%; border-collapse: collapse; color: #fff; margin-top: 15px; }
-        th, td { border: 1px solid #444; padding: 12px; text-align: center; }
-        th { background: #d4af37; color: #000; }
-        
-        .admin-section { display: none; border: 2px dashed red; padding: 15px; margin-top: 15px; border-radius: 10px; }
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:9999; padding-top: 50px; }
+        input, select { width: 80%; padding: 15px; margin: 10px; font-size: 20px; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h1>مؤسسة الشريف الجندي</h1>
-    <div class="status-bar">
-        <span id="stUser">👤 الوضع: موظف</span> | 
-        <button onclick="var p=prompt('كلمة سر المدير:'); if(p=='2525'){ isMgr=true; document.getElementById('mgrZone').style.display='block'; document.getElementById('stUser').innerHTML='👑 الوضع: مدير'; alert('تم التفعيل'); }else{alert('خطأ');}" style="background:none; border:1px solid #d4af37; color:#d4af37; cursor:pointer; border-radius:4px; padding:2px 10px;">دخول المدير</button>
-    </div>
-    <button class="btn" style="background:#900; color:#fff; width:100px; padding:10px; font-size:14px;" onclick="location.reload()">🔄 تحديث</button>
+<h1>مؤسسة الشريف الجندي</h1>
+<p>لو الأزرار ملمستش، اضغط بقوة أو حدث الصفحة</p>
+
+<button class="btn" onclick="document.getElementById('m1').style.display='block'">📦 صنف جديد</button>
+<button class="btn" onclick="document.getElementById('m2').style.display='block'">👥 عميل / مورد</button>
+<button class="btn" onclick="openMove('وارد')">📥 إذن إضافة</button>
+<button class="btn" onclick="openMove('صرف')">📤 إذن صرف</button>
+<button class="btn" onclick="showInv()">📊 الجرد</button>
+<button class="btn" style="background:red; color:#fff" onclick="var p=prompt('الباسورد:'); if(p=='2525'){ document.getElementById('m_admin').style.display='block'; }">🔐 لوحة المدير</button>
+
+<div id="m1" class="modal">
+    <h2>تكويد صنف</h2>
+    <input type="text" id="i_n" placeholder="اسم الصنف">
+    <input type="text" id="i_c" placeholder="كود الصنف">
+    <button class="btn" onclick="saveI()">حفظ</button>
+    <button class="btn" style="background:#555" onclick="this.parentElement.style.display='none'">رجوع</button>
 </div>
 
-<div class="box">
-    <button class="btn" onclick="document.getElementById('popItem').style.display='block'">📦 صنف جديد</button>
-    <button class="btn" onclick="document.getElementById('popEnt').style.display='block'">👥 عميل/مورد</button>
-    <button class="btn" onclick="mType='وارد'; document.getElementById('popMove').style.display='block'; document.getElementById('moveH').innerText='إذن إضافة (وارد)'; loadLists();">📥 إذن إضافة</button>
-    <button class="btn" onclick="mType='صرف'; document.getElementById('popMove').style.display='block'; document.getElementById('moveH').innerText='إذن صرف (صادر)'; loadLists();">📤 إذن صرف</button>
-    <button class="btn" style="width:95%" onclick="renderInv(); document.getElementById('popInv').style.display='block'">📊 جرد المخزن والبحث</button>
+<div id="m2" class="modal">
+    <h2>تكويد عميل/مورد</h2>
+    <select id="e_t"><option value="مورد">مورد</option><option value="عميل">عميل</option></select>
+    <input type="text" id="e_n" placeholder="الاسم">
+    <button class="btn" onclick="saveE()">حفظ</button>
+    <button class="btn" style="background:#555" onclick="this.parentElement.style.display='none'">رجوع</button>
 </div>
 
-<div id="mgrZone" class="admin-section">
-    <h2 style="color:red">⚙ صلاحيات المدير</h2>
-    <button class="btn" style="width:95%; background:#fff;" onclick="exportExcel()">📥 تحميل سجل العمليات (Excel)</button>
-    <button class="btn" style="width:95%; background:orange;" onclick="showAdminEdit()">✏ تعديل وحذف الأصناف</button>
-    <div id="mgrDisplay"></div>
+<div id="m3" class="modal">
+    <h2 id="m_t">حركة</h2>
+    <input type="text" id="m_d" placeholder="رقم الإذن">
+    <select id="m_si"></select>
+    <input type="number" id="m_q" placeholder="الكمية">
+    <select id="m_se"></select>
+    <button class="btn" onclick="saveM()">تأكيد</button>
+    <button class="btn" style="background:#555" onclick="this.parentElement.style.display='none'">رجوع</button>
 </div>
 
-<div id="popItem" class="modal">
-    <div class="modal-inner">
-        <h2>تكويد صنف جديد</h2>
-        <input type="text" id="itN" placeholder="اسم الصنف">
-        <input type="text" id="itC" placeholder="كود الصنف">
-        <button class="btn" style="width:100%" onclick="saveIt()">حفظ البيانات</button>
-        <button class="btn" style="width:100%; background:#555; color:#fff;" onclick="this.parentElement.parentElement.style.display='none'">إلغاء</button>
-    </div>
-</div>
-
-<div id="popEnt" class="modal">
-    <div class="modal-inner">
-        <h2>إضافة عميل أو مورد</h2>
-        <select id="enT"><option value="مورد">مورد</option><option value="عميل">عميل</option></select>
-        <input type="text" id="enN" placeholder="الاسم">
-        <button class="btn" style="width:100%" onclick="saveEn()">حفظ</button>
-        <button class="btn" style="width:100%; background:#555; color:#fff;" onclick="this.parentElement.parentElement.style.display='none'">إلغاء</button>
-    </div>
-</div>
-
-<div id="popMove" class="modal">
-    <div class="modal-inner">
-        <h2 id="moveH">حركة</h2>
-        <input type="text" id="moD" placeholder="رقم الإذن اليدوي">
-        <select id="moIt"></select>
-        <input type="number" id="moQ" placeholder="الكمية">
-        <select id="moEn"></select>
-        <button class="btn" style="width:100%" onclick="saveMo()">تأكيد الحركة</button>
-        <button class="btn" style="width:100%; background:#555; color:#fff;" onclick="this.parentElement.parentElement.style.display='none'">إلغاء</button>
-    </div>
-</div>
-
-<div id="popInv" class="modal">
-    <div class="modal-inner">
-        <h2>📊 تقرير الجرد</h2>
-        <input type="text" placeholder="بحث باسم الصنف..." onkeyup="searchInv(this.value)">
-        <div id="invTableBox"></div>
-        <button class="btn" style="width:100%; background:red; color:#fff;" onclick="this.parentElement.parentElement.style.display='none'">إغلاق</button>
-    </div>
+<div id="m_admin" class="modal">
+    <h2>لوحة المدير</h2>
+    <button class="btn" onclick="alert(JSON.stringify(db.logs))">عرض السجلات</button>
+    <button class="btn" onclick="localStorage.clear(); location.reload();">تصفير النظام</button>
+    <button class="btn" style="background:#555" onclick="this.parentElement.style.display='none'">خروج</button>
 </div>
 
 <script>
-    var mType = ""; var isMgr = false;
-    var data = JSON.parse(localStorage.getItem('SHARIF_V22')) || { items:[], logs:[], entities:[] };
+    // قاعدة البيانات
+    var db = JSON.parse(localStorage.getItem('SHARIF_V23')) || { items:[], logs:[], entities:[] };
+    var curT = "";
 
-    function saveIt() {
-        var n=document.getElementById('itN').value, c=document.getElementById('itC').value;
-        if(n && c){ data.items.push({n:n, c:c}); sync(); alert('تم الحفظ'); document.getElementById('popItem').style.display='none'; }
+    function saveI() {
+        db.items.push({n:document.getElementById('i_n').value, c:document.getElementById('i_c').value});
+        save(); alert('تم'); document.getElementById('m1').style.display='none';
     }
 
-    function saveEn() {
-        var t=document.getElementById('enT').value, n=document.getElementById('enN').value;
-        if(n){ data.entities.push({t:t, n:n}); sync(); alert('تم الحفظ'); document.getElementById('popEnt').style.display='none'; }
+    function saveE() {
+        db.entities.push({t:document.getElementById('e_t').value, n:document.getElementById('e_n').value});
+        save(); alert('تم'); document.getElementById('m2').style.display='none';
     }
 
-    function loadLists() {
-        document.getElementById('moIt').innerHTML = data.items.map(i => <option value="${i.c}">${i.n}</option>).join('');
-        var filtered = data.entities.filter(e => (mType==='وارد' ? e.t==='مورد' : e.t==='عميل'));
-        document.getElementById('moEn').innerHTML = filtered.map(e => <option value="${e.n}">${e.n}</option>).join('');
+    function openMove(t) {
+        curT = t; document.getElementById('m_t').innerText = t;
+        document.getElementById('m_si').innerHTML = db.items.map(i => <option value="${i.c}">${i.n}</option>).join('');
+        document.getElementById('m_se').innerHTML = db.entities.map(e => <option value="${e.n}">${e.n}</option>).join('');
+        document.getElementById('m3').style.display='block';
     }
 
-    function saveMo() {
-        var d=document.getElementById('moD').value, i=document.getElementById('moIt').value, q=document.getElementById('moQ').value, e=document.getElementById('moEn').value;
-        if(d && i && q){
-            data.logs.push({id:Date.now(), d:d, i:i, q:parseFloat(q), e:e, t:mType, dt:new Date().toLocaleString('ar-EG')});
-            sync(); alert('تم التسجيل'); document.getElementById('popMove').style.display='none';
-        }
+    function saveM() {
+        db.logs.push({t:curT, d:document.getElementById('m_d').value, i:document.getElementById('m_si').value, q:parseFloat(document.getElementById('m_q').value)});
+        save(); alert('تم الحفظ'); document.getElementById('m3').style.display='none';
     }
 
-    function renderInv() {
-        var h = '<table><tr><th>الصنف</th><th>الرصيد</th></tr>';
-        data.items.forEach(it => {
+    function showInv() {
+        var res = "الجرد:\n";
+        db.items.forEach(it => {
             var b = 0;
-            data.logs.forEach(l => { if(l.i==it.c) b += (l.t=='وارد' ? l.q : -l.q); });
-            h += <tr><td>${it.n}</td><td style="color:${b<0?'red':'lime'}">${b}</td></tr>;
+            db.logs.forEach(l => { if(l.i==it.c) b += (l.t=='وارد' ? l.q : -l.q); });
+            res += it.n + ": " + b + "\n";
         });
-        document.getElementById('invTableBox').innerHTML = h + '</table>';
+        alert(res);
     }
 
-    function showAdminEdit() {
-        var h = '<h3>تحكم الأصناف</h3><table>';
-        data.items.forEach((it, idx) => {
-            h += <tr><td>${it.n}</td><td><button onclick="data.items.splice(${idx},1);sync();showAdminEdit();" style="color:red">حذف</button></td></tr>;
-        });
-        document.getElementById('mgrDisplay').innerHTML = h + '</table>';
-    }
-
-    function sync() { localStorage.setItem('SHARIF_V22', JSON.stringify(data)); }
-    
-    function exportExcel() {
-        var ws = XLSX.utils.json_to_sheet(data.logs);
-        var wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Logs");
-        XLSX.writeFile(wb, "Sharif_Report.xlsx");
-    }
+    function save() { localStorage.setItem('SHARIF_V23', JSON.stringify(db)); }
 </script>
+
 </body>
 </html>
